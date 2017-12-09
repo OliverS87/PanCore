@@ -3,8 +3,8 @@ import os
 import shutil
 import sys
 
-from Pansnp import Cluster
-import SimpleParSNP
+from Pansnp.Cluster import Cluster
+from SimpleParSNP import SimpleParSNP
 
 
 def clean_up(outpath, prefix):
