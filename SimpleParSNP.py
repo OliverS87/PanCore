@@ -7,8 +7,8 @@ from os import path
 import os
 import sys
 import subprocess
-from SimpleParSNP import correctXMFA
-from SimpleParSNP import generateUseq
+from .simpleparsnp_libs import correctXMFA
+from .simpleparsnp_libs import generateUseq
 from Bio import SeqIO
 from datetime import datetime as dt
 
@@ -130,7 +130,7 @@ class SimpleParSNP:
         self.log_p = path.join(out_dir, "{0}.log".format(self.prefix))
         # Create  log file
         with open(self.log_p, "w") as log_f:
-            log_f.write("---SimpleParSNP V0.0.1---\n")
+            log_f.write("---simpleparsnp_libs V0.0.1---\n")
 
     # Write to log file
     def write_log(self, message):
@@ -170,7 +170,7 @@ class SimpleParSNP:
         # Rename raw xmfa output file
         #os.rename(path.join(out_dir, "parsnpAligner.xmfa"), path.join(out_dir, "{0}.xmfa".format(self.prefix)))
         # Correct header lines in raw xmfa output
-        xmfa_corrector = CorrectXMFA(self.dist, path.join(out_dir, self.prefix, "parsnpAligner.xmfa"),
+        xmfa_corrector = correctXMFA.CorrectXMFA(self.dist, path.join(out_dir, self.prefix, "parsnpAligner.xmfa"),
                                         self.min_si,  self.max_si, self.input_contigs_dict, self.write_log)
         corrected_headers = xmfa_corrector.correct_xmfa()
         # Check for error code
@@ -184,7 +184,7 @@ class SimpleParSNP:
         os.rename(path.join(out_dir, self.prefix, "parsnpAligner.xmfa.corr"),
                   path.join(out_dir, "{0}.xmfa".format(self.prefix)))
         # Generate unaligned sequence files
-        useq_generator = GenerateUseq(self.seq_db, corrected_headers, self.input_contigs_dict,
+        useq_generator = generateUseq.GenerateUseq(self.seq_db, corrected_headers, self.input_contigs_dict,
                                                      self.input_contigs_org_names, out_dir, self.prefix, self.write_log)
         try:
             useq_generator.generate_useqs(generate_useq, generate_icstats)

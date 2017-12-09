@@ -3,8 +3,8 @@ import os
 import shutil
 import sys
 
-from Pansnp.cluster import Cluster
-from SimpleParSNP import SimpleParSNP
+from .Pansnp.cluster import Cluster
+from .SimpleParSNP import SimpleParSNP
 
 
 def clean_up(outpath, prefix):
@@ -77,7 +77,7 @@ if __name__ == '__main__':
             print("Skipping {0} because length <= 1".format(prefix))
             continue
         # Prepare simpleparsnp run
-        sp = SimpleParSNP.SimpleParSNP()
+        sp = SimpleParSNP()
         sp.set_dist(dist_param)
         sp.set_reference(ref_p)
         sp.set_threads(cpu_count)
@@ -91,7 +91,7 @@ if __name__ == '__main__':
             clean_up(out_p, prefix)
             continue
         # Convert the IC stat file
-        cluster = Cluster.Cluster(os.path.join(out_p, "{0}.ic.csv".format(prefix)), min_cluster)
+        cluster = Cluster(os.path.join(out_p, "{0}.ic.csv".format(prefix)), min_cluster)
         if cluster_method == "rec":
             clustering = cluster.cluster_rearrangement()
         elif cluster_method == "sim":
