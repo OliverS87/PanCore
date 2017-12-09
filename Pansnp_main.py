@@ -3,7 +3,7 @@ import os
 import shutil
 import sys
 
-from .Pansnp.cluster import Cluster
+from Pansnp.cluster import Cluster
 from .SimpleParSNP import SimpleParSNP
 
 
