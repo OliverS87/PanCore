@@ -217,4 +217,4 @@ if __name__ == '__main__':
     simple_snp.set_threads(sys.argv[3])
     simple_snp.add_files(sys.argv[6:])
     simple_snp.set_prefix(sys.argv[5])
-    simple_snp.run_parsnp(sys.argv[4])
+    simple_snp.run_parsnp(sys.argv[4], True, True)
