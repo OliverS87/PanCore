@@ -3,8 +3,8 @@ import os
 import shutil
 import sys
 
-from Cluster import Cluster
-from SimpleParSNP import SimpleParSNP
+from .Pansnp import Cluster
+import SimpleParSNP
 
 
 def clean_up(outpath, prefix):
@@ -38,7 +38,8 @@ def clean_up(outpath, prefix):
         pass
 
 
-def pansnp_main(args):
+if __name__ == '__main__':
+    args = sys.argv
     # usage: python3 run_cluster.py cluster.csv prev_xmfa ref_path sample_folder out_path
     if len(args[1:]) != 7:
         print('usage: python3 {0} sample_folder ref_path out_path dist cpu cluster[r|l|s] min_cluster'.format(
