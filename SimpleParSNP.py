@@ -160,6 +160,8 @@ class SimpleParSNP:
                              close_fds=True, executable="/bin/bash")
         # Return RC if failed
         if run.returncode != 0:
+            print(run.stderr)
+            print(run.stdout)
             self.write_log("Parsnp run failed. Bummer :(\n")
             return run.returncode
         # parsnp creates its own log file, join its content to "our" log file
