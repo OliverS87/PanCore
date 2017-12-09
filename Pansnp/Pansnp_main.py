@@ -3,7 +3,7 @@ import os
 import shutil
 import sys
 
-import Cluster
+from Cluster import Cluster
 from SimpleParSNP import SimpleParSNP
 
 
