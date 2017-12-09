@@ -4,7 +4,7 @@ import shutil
 import sys
 
 from Pansnp.Cluster import Cluster
-from SimpleParSNP import SimpleParSNP
+from .SimpleParSNP import SimpleParSNP
 
 
 def clean_up(outpath, prefix):
