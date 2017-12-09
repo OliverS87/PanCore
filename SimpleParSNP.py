@@ -1,8 +1,17 @@
-# SimpleParSNP class
-# Instances configure the .ini file required by parsnp
-# and run parsnp
-# Also provides functionality to correct parsnps xmfa index bug
-# and to create a file containing all unaligned sequences
+# New wrapper for parsnp binary
+# The binary is part of the most recent parsnp v1.2 release
+# https://github.com/marbl/parsnp/archive/v1.2.tar.gz
+# First install libMUSCLE from the muscle folder
+# ./configure, make, make install
+# Then install parsnp
+# ./configure, make, make install
+# the parsnp binary without the wrapper requires an INI file that
+# sets all parameters for the core analysis run.
+# This wrapper first generates this INI files based on a set of cmdline arguments
+# before the binary is run with the generated INi file.
+# Following a run, indices in the original xmfa output are corrected
+# and additional files can be created
+
 from os import path
 import os
 import sys
@@ -26,30 +35,35 @@ class SimpleParSNP:
         self.ref_p = ""
         # Path to input files
         self.files_p = []
-        # Match SI to file path
+        # Each input genome is identifed with an unqique sequence identifier (SI)
+        # seq_db matches the SI back to the original file name
         self.seq_db = {}
         self.min_si = 0
         self.max_si = 0
         # Prefix for all output file names
         self.prefix = ""
-        # Store some information about each contig in the set of input files
+        # Each input file has >=1 contig
+        # Store contig lengths and contig headers in separate dicts
         self.input_contigs_dict = {}
         self.input_contigs_org_names = {}
         # Global log file
         self.log_p = None
 
+    # Checks and eventually sets the (new) path to the reference
     def set_reference(self, new_ref_p):
         if path.isfile(new_ref_p):
             self.ref_p = new_ref_p
 
+    # Add more assemblies to the list of sample files
     def add_files(self, new_files_p):
         for new_file_p in new_files_p:
             if path.isfile(new_file_p):
                 self.files_p.append(new_file_p)
-        # After adding new files, rebuild contig DB
+        # After adding new files, rebuild contig DBs
         self.update_seqdb()
         self.update_contigdb()
 
+    # Set the number of CPU cores than can be used by parsnp binary
     def set_threads(self, thread_nr):
         try:
             int(thread_nr)
@@ -57,6 +71,7 @@ class SimpleParSNP:
             return
         self.threads = thread_nr
 
+    # Set the max. allowed distance between two MUMs to be included in one LCB
     def set_dist(self, new_dist):
         try:
             int(new_dist)
@@ -64,10 +79,12 @@ class SimpleParSNP:
             return
         self.dist = new_dist
 
+    # Each output filename for this run starts with a user-defined prefix
     def set_prefix(self, new_pf):
-        # Dots are not allowed in prefix, replace with underscore
-        self.prefix = new_pf.replace(".","_")
+        # Dots are not allowed in prefix
+        self.prefix = new_pf.replace(".","")
 
+    # Write the configuration INI file for a subsequent parsnp binary run
     def generate_ini(self, out_dir):
         ini_p = path.join(out_dir, "{0}parsnp_config.ini".format(self.prefix))
         with open(ini_p, "w") as ini_f:
@@ -78,6 +95,10 @@ class SimpleParSNP:
             ini_f.write("file={0}\n".format(self.ref_p))
             ini_f.write("reverse=0\n")
             ini_f.write("[Query]\n")
+            # Each sample file gets an ID assigned here. The parsnp binary output only contains
+            # the ID and not the full file name in sequence headers
+            # Reference gets SI==1, all other sample files are numbered starting with 2 in the order
+            # of their appearance in files_p list
             for file_p in enumerate(self.files_p, 1):
                 ini_f.write("file{0}={1}\n".format(file_p[0], file_p[1]))
                 ini_f.write("reverse{0}=0\n".format(file_p[0]))
@@ -96,7 +117,7 @@ class SimpleParSNP:
             ini_f.write("outdir={0}\n".format(path.join(out_dir, self.prefix)))
             ini_f.write("prefix={0}\nshowbps=0\n".format(self.prefix))
 
-    # Update seq DB dict that matches each file name to an SI as returned later by parsnp
+    # Update seq DB dict that matches each file name to an SI as written in the INI file and returned by parsnp
     def update_seqdb(self):
         # Reference
         self.seq_db[1] = self.ref_p
@@ -137,9 +158,12 @@ class SimpleParSNP:
         with open(self.log_p, "a") as log_f:
             log_f.write(message)
 
+    # Main function that invokes all functions required for a successfull parsnp binary run
+    # Requires three arguments:
+    # 1. Output folder
+    # 2. Should a file with all non-core (i.e. unaligned) sequences be generated?
+    # 3. Should a file with statistics about the non-core region be generated?
     def run_parsnp(self, out_dir, generate_useq, generate_icstats):
-        # Define absolute path of theis script
-        script_path = os.path.dirname(os.path.abspath(__file__))
         start = dt.now()
         if not path.isdir(path.join(out_dir, self.prefix)):
             os.makedirs(path.join(out_dir, self.prefix), exist_ok=True)
@@ -153,15 +177,13 @@ class SimpleParSNP:
         # Write file names to log file
         for i, p in enumerate(self.files_p, 2):
             self.write_log("si{0}:{1}\n".format(i, path.basename(p)))
-        run = subprocess.run(path.join(script_path, "bin/parsnp.simple") + " "
+        run = subprocess.run("parsnp.simple "
                              + path.join(out_dir, "{0}parsnp_config.ini".format(self.prefix)),
                              shell=True, stdin=None,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                              close_fds=True, executable="/bin/bash")
         # Return RC if failed
         if run.returncode != 0:
-            print(run.stderr)
-            print(run.stdout)
             self.write_log("Parsnp run failed. Bummer :(\n")
             return run.returncode
         # parsnp creates its own log file, join its content to "our" log file
