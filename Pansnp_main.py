@@ -39,6 +39,9 @@ def clean_up(outpath, prefix):
 
 
 if __name__ == '__main__':
+    # Define pansnp_path
+    pansnp_path = os.path.dirname(os.path.abspath(__file__))
+    print(pansnp_path)
     args = sys.argv
     # usage: python3 run_cluster.py cluster.csv prev_xmfa ref_path sample_folder out_path
     if len(args[1:]) != 7:
