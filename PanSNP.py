@@ -1,6 +1,6 @@
 # Wrapper function to run pansnp
-from .PanSNP.Pansnp.Pansnp_main import pansnp_main
+from Pansnp import Pansnp_main as pm
 import sys
 
 if __name__ == '__main__':
-    pansnp_main(sys.argv)
+    pm.pansnp_main(sys.argv)
