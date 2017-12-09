@@ -7,8 +7,8 @@ from os import path
 import os
 import sys
 import subprocess
-from SimpleParSNP import CorrectXMFA
-from SimpleParSNP import GenerateUseq
+from SimpleParSNP import correctXMFA
+from SimpleParSNP import generateUseq
 from Bio import SeqIO
 from datetime import datetime as dt
 
