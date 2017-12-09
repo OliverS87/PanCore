@@ -138,7 +138,9 @@ class SimpleParSNP:
             log_f.write(message)
 
     def run_parsnp(self, out_dir, generate_useq, generate_icstats):
-        #
+        # Define absolute path of theis script
+        script_path = os.path.dirname(os.path.abspath(__file__))
+        print(script_path)
         start = dt.now()
         if not path.isdir(path.join(out_dir, self.prefix)):
             os.makedirs(path.join(out_dir, self.prefix), exist_ok=True)
