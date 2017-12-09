@@ -151,7 +151,7 @@ class SimpleParSNP:
         # Write file names to log file
         for i, p in enumerate(self.files_p, 2):
             self.write_log("si{0}:{1}\n".format(i, path.basename(p)))
-        run = subprocess.run("./parsnp.simple " + path.join(out_dir, "{0}parsnp_config.ini".format(self.prefix)),
+        run = subprocess.run("bin/parsnp.simple " + path.join(out_dir, "{0}parsnp_config.ini".format(self.prefix)),
                              shell=True, stdin=None,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                              close_fds=True, executable="/bin/bash")
