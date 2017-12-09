@@ -208,7 +208,7 @@ class SimpleParSNP:
 if __name__ == '__main__':
     # Test run
     # Input format: dist, ref, core, out_dir, prefix, sample_file(s)
-    if len(sys.argv[1:]) != 6:
+    if len(sys.argv[1:]) < 6:
         print("Input format: dist, ref, core, out_dir, prefix, sample_file(s)")
         exit(3)
     simple_snp = SimpleParSNP()
