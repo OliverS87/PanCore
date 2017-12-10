@@ -74,7 +74,7 @@ if __name__ == '__main__':
     # To avoid unnecesary problems with absolute and relative paths,
     # the R scripts are written into the defined output_folder and deleted again
     # when Pansnp terminates
-    if cluster_method == "len"
+    if cluster_method == "len":
         rscript = IclengthClusterRscript(out_p)
     elif cluster_method == "sim":
         rscript = MashAnoClusteringRscript(out_p)
