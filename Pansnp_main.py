@@ -60,6 +60,9 @@ if __name__ == '__main__':
         cluster_method = "len"
     min_cluster = int(args[7])
 
+    # Create output folder
+    if not os.path.isdir(out_p):
+        os.makedirs(out_p, exist_ok=True)
 
     # Initialize the cluster queue
     # Each element is a list of files that are going to be core clustered by parsnp
