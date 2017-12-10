@@ -71,7 +71,8 @@ class Cluster:
         # Run mash to sketch all useqs into one sketch
         run = subprocess.run("mash sketch -p {0} -k {1} -s {2} -o {3} {4}".
                              format(cpu, k, 5000, mash_sketch_p,
-                                    " ".join([f.name for f in sep_files_dict.values()])), shell=True)
+                                    " ".join([f.name for f in sep_files_dict.values()])),
+                             stdout=None, stderr=None, shell=True)
         if run.returncode != 0:
             return run.returncode
         # Run mash to evaluate the pairwise distance
@@ -99,7 +100,7 @@ class Cluster:
         png_p =  path.join(out_p, filename.replace(".ic.csv", ".png"))
         run = subprocess.run("Rscript --vanilla {5} {0} {1} {2} {3} {4}".format(
             mash_dist_p, cluster_p, png_p, self.min_nr_clstr, prefix,
-        path.join(out_p, "mash_ani_clustering.r")), shell=True)
+        path.join(out_p, "mash_ani_clustering.r")), stderr=None, stdout=None, shell=True)
         return run.returncode
 
     def cluster_length(self):
@@ -137,7 +138,7 @@ class Cluster:
         run = subprocess.run("Rscript --vanilla {4} {0} {1} {2} {3}".format(
             path.join(out_p, filename), path.join(out_p, cluster_filename),
             path.join(out_p, png_filename), self.min_nr_clstr,
-        path.join(out_p, "iclength_deviation_eucl_cluster.r")), shell=True)
+        path.join(out_p, "iclength_deviation_eucl_cluster.r")), stderr=None, stdout=None, shell=True)
         return run.returncode
 
 
@@ -192,6 +193,6 @@ class Cluster:
                                                             path.join(out_p, cluster_filename),
                                                               self.min_nr_clstr,
                                                               path.join(out_p, "rearrangement_jac_cluster.r")),
-                             shell=True)
+                             stderr=None, stdout=None, shell=True)
         return run.returncode
 
