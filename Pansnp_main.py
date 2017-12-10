@@ -139,4 +139,4 @@ if __name__ == '__main__':
         for i, clstr in enumerate(cluster_list):
             parsnp_queue.append(("{0}_{1}".format(prefix, i), clstr))
         clean_up(out_p, prefix)
-    rscript.remove_script()
+    #rscript.remove_script()
