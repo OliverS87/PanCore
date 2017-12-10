@@ -151,7 +151,7 @@ class SimpleParSNP:
         self.log_p = path.join(out_dir, "{0}.log".format(self.prefix))
         # Create  log file
         with open(self.log_p, "w") as log_f:
-            log_f.write("---simpleparsnp_libs V0.0.1---\n")
+            log_f.write("---simpleparsnp V0.0.1---\n")
 
     # Write to log file
     def write_log(self, message):
