@@ -4,6 +4,8 @@ import shutil
 import sys
 
 from pansnp_libs.cluster import Cluster
+from pansnp_libs.iclength_deviation_eucl_cluster import IclengthClusterRscript
+from pansnp_libs.mash_ani_clustering import MashAnoClusteringRscript
 from SimpleParSNP import SimpleParSNP
 
 
@@ -67,7 +69,18 @@ if __name__ == '__main__':
     # Get all files in sample folder
     [parsnp_queue[0][1].append(os.path.join(samples_folder, item)) for item in os.listdir(samples_folder)
      if os.path.isfile(os.path.join(samples_folder, item))]
-
+    # Clustering may involve somecomputations with R
+    # R is called via Rscript
+    # To avoid unnecesary problems with absolute and relative paths,
+    # the R scripts are written into the defined output_folder and deleted again
+    # when Pansnp terminates
+    if cluster_method == "len"
+        rscript = IclengthClusterRscript(out_p)
+    elif cluster_method == "sim":
+        rscript = MashAnoClusteringRscript(out_p)
+    elif cluster_method == "rec":
+        rscript = None
+    rscript.write_script()
     while parsnp_queue:
         print("Length of queue: {0}".format(len(parsnp_queue)))
         # 1. Get the first element of the queue and run parsnp on it
@@ -123,3 +136,4 @@ if __name__ == '__main__':
         for i, clstr in enumerate(cluster_list):
             parsnp_queue.append(("{0}_{1}".format(prefix, i), clstr))
         clean_up(out_p, prefix)
+    rscript.remove_script()

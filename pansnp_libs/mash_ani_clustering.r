@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 argv = commandArgs(trailingOnly=TRUE)
 if (length(argv)!=5) {
-  stop("Invalid nr. of cmdline args")
+  stop('Invalid nr. of cmdline args')
 } 
 
 mash_dist_path <- argv[1]
@@ -21,10 +21,10 @@ colnames(mash_data) <- rownames(mash_data)
 mash_data.m <- as.matrix(mash_data)
 mash_data.d <- as.dist(mash_data.m)
 # Cluster: Euclidean distance, ward.D2 hierarchical clustering
-mash_data.c <- hclust(mash_data.d, method = "ward.D2")
+mash_data.c <- hclust(mash_data.d, method = 'ward.D2')
 # Plot heatmap
 png(filename = out_tree, width = 1024, height = 768)
-plot(as.dendrogram(mash_data.c), xlab = "Sequence ID (SI)", ylab = "Distance", main = paste("ANI clustering for\n", prefix, "\nusing", mash_data.c$method))
+plot(as.dendrogram(mash_data.c), xlab = 'Sequence ID (SI)', ylab = 'Distance', main = paste('ANI clustering for\n', prefix, '\nusing', mash_data.c$method))
 dev.off()
 
 # Cut the tree into cluster
