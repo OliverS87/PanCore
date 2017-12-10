@@ -97,8 +97,9 @@ class Cluster:
         # Next, run an rscript to do the clustering
         cluster_p = path.join(out_p, filename.replace(".ic.", ".clstr."))
         png_p =  path.join(out_p, filename.replace(".ic.csv", ".png"))
-        run = subprocess.run("Rscript mash_ani_clustering.r {0} {1} {2} {3} {4}".format(
-            mash_dist_p, cluster_p, png_p, self.min_nr_clstr, prefix), shell=True)
+        run = subprocess.run("Rscript {5} {0} {1} {2} {3} {4}".format(
+            mash_dist_p, cluster_p, png_p, self.min_nr_clstr, prefix,
+        path.join(out_p, "mash_ani_clustering.r")), shell=True)
         return run.returncode
 
     def cluster_length(self):
@@ -190,7 +191,7 @@ class Cluster:
         run = subprocess.run("Rscript {3} {0} {1} {2}".format(path.join(out_p, filename),
                                                             path.join(out_p, cluster_filename),
                                                               self.min_nr_clstr,
-                                                              path.join(out_p, "rearrangement_jac_cluster.r ")),
+                                                              path.join(out_p, "rearrangement_jac_cluster.r")),
                              shell=True)
         return run.returncode
 
