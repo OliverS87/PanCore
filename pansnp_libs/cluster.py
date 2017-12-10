@@ -133,9 +133,10 @@ class Cluster:
         # Next, run an rscript to do the clustering
         cluster_filename = filename.replace(".len.", ".clstr.")
         png_filename = filename.replace(".csv", ".png")
-        run = subprocess.run("Rscript iclength_deviation_eucl_cluster.r {0} {1} {2} {3}".format(
+        run = subprocess.run("Rscript {4} {0} {1} {2} {3}".format(
             path.join(out_p, filename), path.join(out_p, cluster_filename),
-            path.join(out_p, png_filename), self.min_nr_clstr), shell=True)
+            path.join(out_p, png_filename), self.min_nr_clstr,
+        path.join(out_p, "iclength_deviation_eucl_cluster.r")), shell=True)
         return run.returncode
 
 
@@ -186,9 +187,10 @@ class Cluster:
                 feat_out_f.write("\n")
         # Next, run an rscript to do the clustering
         cluster_filename = filename.replace(".fdel.",".clstr.")
-        run = subprocess.run("Rscript rearrangement_jac_cluster.r {0} {1} {2}".format(path.join(out_p, filename),
-                                                                            path.join(out_p, cluster_filename),
-                                                                                      self.min_nr_clstr),
+        run = subprocess.run("Rscript {3} {0} {1} {2}".format(path.join(out_p, filename),
+                                                            path.join(out_p, cluster_filename),
+                                                              self.min_nr_clstr,
+                                                              path.join(out_p, "rearrangement_jac_cluster.r ")),
                              shell=True)
         return run.returncode
 
