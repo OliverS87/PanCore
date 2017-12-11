@@ -79,6 +79,14 @@ class SimpleParSNP:
             return
         self.dist = new_dist
 
+    # Set the minimum core block size
+    def set_size(self, new_size):
+        try:
+            int(new_size)
+        except ValueError:
+            return
+        self.min_cluster_size = new_size
+
     # Each output filename for this run starts with a user-defined prefix
     def set_prefix(self, new_pf):
         # Dots are not allowed in prefix
@@ -245,6 +253,7 @@ if __name__ == '__main__':
 
     simple_snp = SimpleParSNP()
     simple_snp.set_dist(args.distance)
+    simple_snp.set_size(args.size)
     simple_snp.set_reference(args.reference)
     simple_snp.set_threads(args.cpu)
     # Get all files in sample folder

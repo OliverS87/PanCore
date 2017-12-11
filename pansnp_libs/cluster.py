@@ -4,6 +4,8 @@
 # c) Cluster based on mash all-vs-all run on unaligned sequences
 from os import path
 from os import mkdir as mkdir
+from os import remove
+from os import rmdir
 import subprocess
 import math
 
@@ -62,7 +64,8 @@ class Cluster:
         # Close all output files
         [f.close() for f in sep_files_dict.values()]
         # Remove reference from useq files
-        sep_files_dict.pop(1)
+        ref_useq = sep_files_dict.pop(1)
+        remove(ref_useq.name)
         useq_lengths.pop(1)
         # Find longest useq file:
         max_length = max(useq_lengths.values())
@@ -73,6 +76,9 @@ class Cluster:
                              format(cpu, k, 5000, mash_sketch_p,
                                     " ".join([f.name for f in sep_files_dict.values()])),
                              stdout=None, stderr=None, shell=True)
+        # Remove temporary useq files
+        [remove(file.name) for file in sep_files_dict.values()]
+        rmdir(useqs_split_p)
         if run.returncode != 0:
             return run.returncode
         # Run mash to evaluate the pairwise distance

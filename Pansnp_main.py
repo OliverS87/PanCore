@@ -10,7 +10,6 @@ from SimpleParSNP import SimpleParSNP
 
 
 def clean_up(outpath, prefix):
-    return
     # Remove parsnp tmp out if it still exists
     shutil.rmtree(os.path.join(outpath, prefix), ignore_errors=True)
     # Remove parsnp config file if it still exists
@@ -41,24 +40,35 @@ def clean_up(outpath, prefix):
 
 
 if __name__ == '__main__':
-    args = sys.argv
-    # usage: python3 run_cluster.py cluster.csv prev_xmfa ref_path sample_folder out_path
-    if len(args[1:]) != 7:
-        print('usage: python3 {0} sample_folder ref_path out_path dist cpu cluster[r|l|s] min_cluster'.format(
-            args[0]))
-        exit(1)
-    ref_p = args[2]
-    samples_folder = args[1]
-    out_p = args[3]
-    dist_param = int(args[4])
-    cpu_count = int(args[5])
-    if args[6].lower() == "r":
-        cluster_method = "rec"
-    elif args[6].lower() == "s":
-        cluster_method = "sim"
-    else:
-        cluster_method = "len"
-    min_cluster = int(args[7])
+    import argparse
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("reference", help="Full length reference sequence file")
+    parser.add_argument("sample_folder", help="Folder where all sample files are located")
+    parser.add_argument("-p", "--prefix", default="pansnp", help="Prefix for all output files")
+    parser.add_argument("-o", "--outdir", default="pansnp", help="Output path")
+    parser.add_argument("-c", "--cpu", default=1, type=int, help="Number of CPU cores")
+    parser.add_argument("-s", "--size", default=21, type=int, help="Minimum core block size")
+    parser.add_argument("-d", "--distance", default=30, type=int,
+                        help="Maximum distance between two MUMS in a core block")
+    #parser.add_argument("-u", "--unaligned", action="store_true", help="Output unaligned regions?")
+    parser.add_argument("-a", "--all_core", action="store_true",
+                        help="Output core block alignment for each sample subset")
+    parser.add_argument("-i", "--plot", action="Plot cluster for each sample subset",
+                        help="Output core block alignment for each sample subset")
+    parser.add_argument('cluster_method', choices=["r", "s", "l"],
+                        help="Cluster by 'R'earrangements, 'S'imilarity or 'L'ength")
+    parser.add_argument("-c", "--cluster", default=2, type=int, help="Max. number of multi-element cluster created during each cycle")
+    args = parser.parse_args()
+
+    ref_p = args.reference
+    samples_folder = args.sample_folder
+    out_p = args.outdir
+    dist_param = args.distance
+    cpu_count = args.cpu
+    size_param = args.size
+    cluster_method = args.cluster_method
+    # Create at least two multi-cluster per iteration
+    min_cluster = min(2, args.cluster)
 
     # Create output folder
     if not os.path.isdir(out_p):
@@ -77,11 +87,11 @@ if __name__ == '__main__':
     # To avoid unnecesary problems with absolute and relative paths,
     # the R scripts are written into the defined output_folder and deleted again
     # when Pansnp terminates
-    if cluster_method == "len":
+    if cluster_method == "l":
         rscript = IclengthClusterRscript(out_p)
-    elif cluster_method == "sim":
+    elif cluster_method == "s":
         rscript = MashAnoClusteringRscript(out_p)
-    elif cluster_method == "rec":
+    elif cluster_method == "r":
         rscript = None
     rscript.write_script()
     while parsnp_queue:
@@ -108,9 +118,9 @@ if __name__ == '__main__':
             continue
         # Convert the IC stat file
         cluster = Cluster(os.path.join(out_p, "{0}.ic.csv".format(prefix)), min_cluster)
-        if cluster_method == "rec":
+        if cluster_method == "r":
             clustering = cluster.cluster_rearrangement()
-        elif cluster_method == "sim":
+        elif cluster_method == "s":
             clustering = cluster.cluster_ani(cpu_count)
         else:
             clustering = cluster.cluster_length()
