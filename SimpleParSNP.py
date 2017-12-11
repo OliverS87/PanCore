@@ -232,14 +232,25 @@ class SimpleParSNP:
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.parse_args()
+    parser.add_argument("reference", help="Full length reference sequence file")
+    parser.add_argument("sample_folder", help="Folder where all sample files are located")
+    parser.add_argument("-p", "--prefix", default="parsnp", help="Prefix for all output files")
+    parser.add_argument("-o", "--outdir", default="parsnp", help="Output path")
+    parser.add_argument("-c", "--cpu", default=1, type=int, help="Number of CPU cores")
+    parser.add_argument("-s", "--size", default=21, type=int, help="Minimum core block size")
+    parser.add_argument("-d", "--distance", default=30, type=int,
+                        help="Maximum distance between two MUMS in a core block")
+    parser.add_argument("-u", "--unaligned", action="store_true", help="Output unaligned regions?")
+    args = parser.parse_args()
+    print(args)
+    exit(0)
     # Test run
     # Input format: dist, ref, core, out_dir, prefix, sample_file(s)
     if len(sys.argv[1:]) < 6:
         print("Input format: dist, ref, core, out_dir, prefix, sample_file(s)")
         exit(3)
     simple_snp = SimpleParSNP()
-    simple_snp.set_dist(sys.argv[1])
+    simple_snp.set_dist(args.distance)
     simple_snp.set_reference(sys.argv[2])
     simple_snp.set_threads(sys.argv[3])
     simple_snp.add_files(sys.argv[6:])
