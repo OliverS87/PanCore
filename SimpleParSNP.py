@@ -242,17 +242,15 @@ if __name__ == '__main__':
                         help="Maximum distance between two MUMS in a core block")
     parser.add_argument("-u", "--unaligned", action="store_true", help="Output unaligned regions?")
     args = parser.parse_args()
-    print(args)
-    exit(0)
-    # Test run
-    # Input format: dist, ref, core, out_dir, prefix, sample_file(s)
-    if len(sys.argv[1:]) < 6:
-        print("Input format: dist, ref, core, out_dir, prefix, sample_file(s)")
-        exit(3)
+
     simple_snp = SimpleParSNP()
     simple_snp.set_dist(args.distance)
-    simple_snp.set_reference(sys.argv[2])
-    simple_snp.set_threads(sys.argv[3])
-    simple_snp.add_files(sys.argv[6:])
-    simple_snp.set_prefix(sys.argv[5])
-    simple_snp.run_parsnp(sys.argv[4], True, True)
+    simple_snp.set_reference(args.reference)
+    simple_snp.set_threads(args.cpu)
+    # Get all files in sample folder
+    simple_snp.add_files([file for file in os.listdir(args.sample_folder)
+                          if os.path.isfile(os.path.join(args.sample_folder, file))])
+    simple_snp.set_prefix(args.prefix)
+    # For standalone SimpleParSNP run, do not create the intracluster region stat fike
+    # as this file is only useful for a pansnp run
+    simple_snp.run_parsnp(args.outdir, args.unaligned, False)
