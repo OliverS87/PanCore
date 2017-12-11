@@ -229,10 +229,10 @@ class SimpleParSNP:
         return 0
 
 
-
-
-
 if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.parse_args()
     # Test run
     # Input format: dist, ref, core, out_dir, prefix, sample_file(s)
     if len(sys.argv[1:]) < 6:
