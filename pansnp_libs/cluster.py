@@ -10,9 +10,10 @@ import subprocess
 import math
 
 class Cluster:
-    def __init__(self, ic_stat_p, min_nr_clstr):
+    def __init__(self, ic_stat_p, min_nr_clstr, make_plots):
         self.ic_stat_p = ic_stat_p
         self.min_nr_clstr = min_nr_clstr
+        self.make_plots = make_plots
 
 
     # Calculate pairwise ANI with mash
@@ -80,12 +81,24 @@ class Cluster:
         [remove(file.name) for file in sep_files_dict.values()]
         rmdir(useqs_split_p)
         if run.returncode != 0:
+            try:
+                remove(mash_sketch_p)
+            except FileNotFoundError:
+                pass
             return run.returncode
         # Run mash to evaluate the pairwise distance
         #  ./mash dist  -p 1 -t talia.msh talia.msh > talia.out
         run = subprocess.run("mash dist -p {0} -t {1}.msh {1}.msh > {2}".
                              format(cpu, mash_sketch_p, mash_dist_p), shell=True)
         if run.returncode != 0:
+            try:
+                remove(mash_sketch_p)
+            except FileNotFoundError:
+                pass
+            try:
+                remove(mash_dist_p)
+            except FileNotFoundError:
+                pass
             return run.returncode
         # Modify mash output, reduce identifier to si (currently it is path)
         modified_out = []
@@ -103,10 +116,23 @@ class Cluster:
                 new_mash_dist_f.write("\t".join(line)+"\n")
         # Next, run an rscript to do the clustering
         cluster_p = path.join(out_p, filename.replace(".ic.", ".clstr."))
-        png_p =  path.join(out_p, filename.replace(".ic.csv", ".png"))
+        # Create a plot of this clustering?
+        if self.make_plots:
+            png_p =  path.join(out_p, filename.replace(".ic.csv", ".png"))
+        else:
+            png_p = "NA"
         run = subprocess.run("Rscript --vanilla {5} {0} {1} {2} {3} {4}".format(
             mash_dist_p, cluster_p, png_p, self.min_nr_clstr, prefix,
         path.join(out_p, "mash_ani_clustering.r")), stderr=None, stdout=None, shell=True)
+        # Clean up
+        try:
+            remove(mash_sketch_p)
+        except FileNotFoundError:
+            pass
+        try:
+            remove(mash_dist_p)
+        except FileNotFoundError:
+            pass
         return run.returncode
 
     def cluster_length(self):
@@ -140,7 +166,10 @@ class Cluster:
                     out_f.write(item)
         # Next, run an rscript to do the clustering
         cluster_filename = filename.replace(".len.", ".clstr.")
-        png_filename = filename.replace(".csv", ".png")
+        if self.make_plots:
+            png_filename = filename.replace(".csv", ".png")
+        else:
+            png_filename = "NA"
         run = subprocess.run("Rscript --vanilla {4} {0} {1} {2} {3}".format(
             path.join(out_p, filename), path.join(out_p, cluster_filename),
             path.join(out_p, png_filename), self.min_nr_clstr,
@@ -185,6 +214,7 @@ class Cluster:
         # Define output path
         out_p, filename = path.split(self.ic_stat_p)
         filename = filename.replace(".ic.", ".fdel.")
+        prefix = filename.split(".")[0]
         with open(path.join(out_p, filename), "w") as feat_out_f:
             # Write header
             feat_out_f.write("si," + ",".join(sorted_ic_reg_list) + "\n")
@@ -195,9 +225,12 @@ class Cluster:
                 feat_out_f.write("\n")
         # Next, run an rscript to do the clustering
         cluster_filename = filename.replace(".fdel.",".clstr.")
-        run = subprocess.run("Rscript --vanilla {3} {0} {1} {2}".format(path.join(out_p, filename),
+        plot_filename = filename.replace(".fdel.csv",".png")
+        run = subprocess.run("Rscript --vanilla {5} {0} {1} {2} {3} {4}".format(path.join(out_p, filename),
                                                             path.join(out_p, cluster_filename),
                                                               self.min_nr_clstr,
+                                                        path.join(out_p, plot_filename),
+                                                                                prefix,
                                                               path.join(out_p, "rearrangement_jac_cluster.r")),
                              stderr=None, stdout=None, shell=True)
         return run.returncode

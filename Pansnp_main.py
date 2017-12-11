@@ -9,7 +9,7 @@ from pansnp_libs.mash_ani_clustering import MashAnoClusteringRscript
 from SimpleParSNP import SimpleParSNP
 
 
-def clean_up(outpath, prefix):
+def clean_up(outpath, prefix, keep_all_core):
     # Remove parsnp tmp out if it still exists
     shutil.rmtree(os.path.join(outpath, prefix), ignore_errors=True)
     # Remove parsnp config file if it still exists
@@ -17,10 +17,11 @@ def clean_up(outpath, prefix):
         os.remove(os.path.join(outpath, "{0}parsnp_config.ini".format(prefix)))
     except FileNotFoundError:
         pass
-    try:
-        os.remove(os.path.join(outpath, "{0}.xmfa".format(prefix)))
-    except FileNotFoundError:
-        pass
+    if not keep_all_core:
+        try:
+            os.remove(os.path.join(outpath, "{0}.xmfa".format(prefix)))
+        except FileNotFoundError:
+            pass
     try:
         os.remove(os.path.join(outpath, "{0}.ic.csv".format(prefix)))
     except FileNotFoundError:
@@ -53,8 +54,8 @@ if __name__ == '__main__':
     #parser.add_argument("-u", "--unaligned", action="store_true", help="Output unaligned regions?")
     parser.add_argument("-a", "--all_core", action="store_true",
                         help="Output core block alignment for each sample subset")
-    parser.add_argument("-i", "--plot", action="Plot cluster for each sample subset",
-                        help="Output core block alignment for each sample subset")
+    parser.add_argument("-i", "--plot", action="store_true",
+                        help="Plot cluster for each sample subset")
     parser.add_argument('cluster_method', choices=["r", "s", "l"],
                         help="Cluster by 'R'earrangements, 'S'imilarity or 'L'ength")
     parser.add_argument("-c", "--cluster", default=2, type=int, help="Max. number of multi-element cluster created during each cycle")
@@ -67,9 +68,11 @@ if __name__ == '__main__':
     cpu_count = args.cpu
     size_param = args.size
     cluster_method = args.cluster_method
+    keep_all_core = args.all_core
+    plot = args.plot
     # Create at least two multi-cluster per iteration
     min_cluster = min(2, args.cluster)
-
+    prefix = args.prefix
     # Create output folder
     if not os.path.isdir(out_p):
         os.makedirs(out_p, exist_ok=True)
@@ -78,7 +81,7 @@ if __name__ == '__main__':
     # Each element is a list of files that are going to be core clustered by parsnp
     # each item comes in this format (id[file1,file2,file3,...])
     # Each parsnp run gives rise to more cluster, these are appended to the end of the queue
-    parsnp_queue = [("talia",[])]
+    parsnp_queue = [(prefix,[])]
     # Get all files in sample folder
     [parsnp_queue[0][1].append(os.path.join(samples_folder, item)) for item in os.listdir(samples_folder)
      if os.path.isfile(os.path.join(samples_folder, item))]
@@ -109,15 +112,18 @@ if __name__ == '__main__':
         sp.set_threads(cpu_count)
         sp.add_files(file_list)
         sp.set_prefix(prefix)
-        # Run parsnp, do not create unaligned file
-        # But create stat file
-        sp_rc = sp.run_parsnp(out_p, True, True)
+        # Run parsnp, if clustering by mash/ani, create the unaligned file
+        # Else, create the intracore region stat file
+        if cluster_method == "s":
+            sp_rc = sp.run_parsnp(out_p, False, True)
+        else:
+            sp_rc = sp.run_parsnp(out_p, True, False)
         if sp_rc != 0:
             print("parsnp for {0} failed.\n{1}".format(prefix, sp_rc))
-            clean_up(out_p, prefix)
+            clean_up(out_p, prefix, keep_all_core)
             continue
         # Convert the IC stat file
-        cluster = Cluster(os.path.join(out_p, "{0}.ic.csv".format(prefix)), min_cluster)
+        cluster = Cluster(os.path.join(out_p, "{0}.ic.csv".format(prefix)), min_cluster, plot)
         if cluster_method == "r":
             clustering = cluster.cluster_rearrangement()
         elif cluster_method == "s":
@@ -126,7 +132,7 @@ if __name__ == '__main__':
             clustering = cluster.cluster_length()
         if clustering != 0:
             print("clustering for {0} failed.".format(prefix))
-            clean_up(out_p, prefix)
+            clean_up(out_p, prefix, keep_all_core)
             continue
         # Open and parse the cluster file
         cluster_db = {}
@@ -143,10 +149,10 @@ if __name__ == '__main__':
         cluster_list = sorted(cluster_db.values(), key=lambda x: -len(x))
         # If there is only one cluster, stop here
         if len(cluster_list) == 1:
-            clean_up(out_p, prefix)
+            clean_up(out_p, prefix, keep_all_core)
             continue
         # Else, add cluster to the queue
         for i, clstr in enumerate(cluster_list):
             parsnp_queue.append(("{0}_{1}".format(prefix, i), clstr))
-        clean_up(out_p, prefix)
+        clean_up(out_p, prefix, keep_all_core)
     rscript.remove_script()
