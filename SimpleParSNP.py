@@ -248,7 +248,7 @@ if __name__ == '__main__':
     simple_snp.set_reference(args.reference)
     simple_snp.set_threads(args.cpu)
     # Get all files in sample folder
-    simple_snp.add_files([file for file in os.listdir(args.sample_folder)
+    simple_snp.add_files([os.path.join(args.sample_folder, file) for file in os.listdir(args.sample_folder)
                           if os.path.isfile(os.path.join(args.sample_folder, file))])
     simple_snp.set_prefix(args.prefix)
     # For standalone SimpleParSNP run, do not create the intracluster region stat fike
