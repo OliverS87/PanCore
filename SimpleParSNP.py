@@ -231,7 +231,7 @@ class SimpleParSNP:
 
 if __name__ == '__main__':
     import argparse
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("reference", help="Full length reference sequence file")
     parser.add_argument("sample_folder", help="Folder where all sample files are located")
     parser.add_argument("-p", "--prefix", default="parsnp", help="Prefix for all output files")
