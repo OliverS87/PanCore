@@ -121,7 +121,7 @@ if __name__ == '__main__':
         sp.set_prefix(prefix)
         # Run parsnp, if clustering by mash/ani, create the unaligned file
         # Else, create the intracore region stat file
-        if cluster_method == "s":
+        if cluster_method == "sa" or cluster_method == "sc":
             sp_rc = sp.run_parsnp(out_p, True, False)
         else:
             sp_rc = sp.run_parsnp(out_p, False, True)
