@@ -61,7 +61,10 @@ class Cluster:
                     useq_lengths[si] += len(line.strip())
                 except KeyError:
                     useq_lengths[si] = len(line.strip())
-                active_out_f.write(line)
+                try:
+                    active_out_f.write(line)
+                except AttributeError:
+                    pass
         # Close all output files
         [f.close() for f in sep_files_dict.values()]
         # Remove reference from useq files
