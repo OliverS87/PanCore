@@ -41,7 +41,10 @@ def clean_up(outpath, prefix, keep_all_core, debug):
         os.remove(os.path.join(outpath, "{0}.len.csv".format(prefix)))
     except FileNotFoundError:
         pass
-
+    try:
+        os.remove(os.path.join(outpath, "{0}.unalign".format(prefix)))
+    except FileNotFoundError:
+        pass
 
 if __name__ == '__main__':
     import argparse

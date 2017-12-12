@@ -188,7 +188,14 @@ class Cluster:
         run = subprocess.run("Rscript --vanilla {4} {0} {1} {2} {3}".format(
             path.join(out_p, filename), path.join(out_p, cluster_filename),
             path.join(out_p, png_filename), self.min_nr_clstr,
-        path.join(out_p, "iclength_deviation_eucl_cluster.r")), stderr=None, stdout=None, shell=True)
+        path.join(out_p, "iclength_deviation_eucl_cluster.r")), stderr=subprocess.PIPE,
+            stdout=subprocess.PIPE, shell=True)
+        # Clean up?
+        if not self.debug:
+            try:
+                remove(path.join(out_p, filename))
+            except FileNotFoundError:
+                pass
         return run.returncode
 
 
