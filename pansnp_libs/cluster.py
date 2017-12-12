@@ -255,5 +255,10 @@ class Cluster:
                                                                                 prefix,
                                                               path.join(out_p, "rearrangement_jac_cluster.r")),
                              stderr=None, stdout=None, shell=True)
+        if not self.debug:
+            try:
+                remove(path.join(out_p, filename))
+            except FileNotFoundError:
+                pass
         return run.returncode
 
