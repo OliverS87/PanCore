@@ -172,6 +172,7 @@ class Cluster:
         p_ic_region = {key: val for key, val in p_ic_region.items() if len(val) == max_si}
         # Define output path
         out_p, filename = path.split(self.ic_stat_p)
+        prefix = filename.split(".")[0]
         filename = filename.replace(".ic.", ".len.")
         # Write filtered ic regions to file
         with open(path.join(out_p, filename), "w") as out_f:
@@ -185,9 +186,9 @@ class Cluster:
             png_filename = filename.replace(".csv", ".png")
         else:
             png_filename = "NA"
-        run = subprocess.run("Rscript --vanilla {4} {0} {1} {2} {3}".format(
+        run = subprocess.run("Rscript --vanilla {5} {0} {1} {2} {3} {4}".format(
             path.join(out_p, filename), path.join(out_p, cluster_filename),
-            path.join(out_p, png_filename), self.min_nr_clstr,
+            path.join(out_p, png_filename), self.min_nr_clstr, prefix,
         path.join(out_p, "iclength_deviation_eucl_cluster.r")), stderr=subprocess.PIPE,
             stdout=subprocess.PIPE, shell=True)
         print(run.stderr)
