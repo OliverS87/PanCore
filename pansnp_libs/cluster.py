@@ -183,12 +183,12 @@ class Cluster:
         # Next, run an rscript to do the clustering
         cluster_filename = filename.replace(".len.", ".clstr.")
         if self.make_plots:
-            png_filename = filename.replace(".len.csv", ".png")
+            png_filepath = path.join(out_p, filename.replace(".len.csv", ".png"))
         else:
-            png_filename = "NA"
+            png_filepath = "NA"
         run = subprocess.run("Rscript --vanilla {5} {0} {1} {2} {3} {4}".format(
             path.join(out_p, filename), path.join(out_p, cluster_filename),
-            path.join(out_p, png_filename), self.min_nr_clstr, prefix,
+            png_filepath, self.min_nr_clstr, prefix,
         path.join(out_p, "iclength_deviation_eucl_cluster.r")), stderr=subprocess.PIPE,
             stdout=subprocess.PIPE, shell=True)
         # Clean up?
@@ -248,11 +248,14 @@ class Cluster:
                 feat_out_f.write("\n")
         # Next, run an rscript to do the clustering
         cluster_filename = filename.replace(".fdel.",".clstr.")
-        plot_filename = filename.replace(".fdel.csv",".png")
+        if self.make_plots:
+            png_filepath = path.join(out_p, filename.replace(".fdel.csv",".png"))
+        else:
+            png_filepath = "NA"
         run = subprocess.run("Rscript --vanilla {5} {0} {1} {2} {3} {4}".format(path.join(out_p, filename),
                                                             path.join(out_p, cluster_filename),
                                                               self.min_nr_clstr,
-                                                        path.join(out_p, plot_filename),
+                                                                                png_filepath,
                                                                                 prefix,
                                                               path.join(out_p, "rearrangement_jac_cluster.r")),
                              stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
