@@ -57,8 +57,8 @@ if __name__ == '__main__':
                         help="Output core block alignment for each sample subset")
     parser.add_argument("-i", "--plot", action="store_true",
                         help="Plot cluster for each sample subset")
-    parser.add_argument('cluster_method', choices=["r", "s", "l"],
-                        help="Cluster by 'R'earrangements, 'S'imilarity or 'L'ength")
+    parser.add_argument("-m", '--method', choices=["r", "s", "l"],
+                        help="Cluster by 'R'earrangements, 'S'imilarity or 'L'ength", default="s")
     parser.add_argument("-l", "--cluster", default=2, type=int, help="Max. number of multi-element cluster created during each cycle")
     args = parser.parse_args()
 
