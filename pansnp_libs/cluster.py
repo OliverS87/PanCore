@@ -138,6 +138,8 @@ class Cluster:
             run = subprocess.run("Rscript --vanilla {5} {0} {1} {2} {3} {4}".format(
                 mash_dist_p, cluster_p, png_p, self.min_nr_clstr, prefix,
             path.join(out_p, "mash_ani_clustering.r")), stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+            print(run.stderr)
+            print(run.stdout)
         # Clean up
         if not self.debug:
             try:
