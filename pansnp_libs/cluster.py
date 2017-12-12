@@ -138,8 +138,6 @@ class Cluster:
             run = subprocess.run("Rscript --vanilla {5} {0} {1} {2} {3} {4}".format(
                 mash_dist_p, cluster_p, png_p, self.min_nr_clstr, prefix,
             path.join(out_p, "mash_ani_clustering.r")), stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
-            print(run.stderr)
-            print(run.stdout)
         # Clean up
         if not self.debug:
             try:
@@ -193,8 +191,6 @@ class Cluster:
             path.join(out_p, png_filename), self.min_nr_clstr, prefix,
         path.join(out_p, "iclength_deviation_eucl_cluster.r")), stderr=subprocess.PIPE,
             stdout=subprocess.PIPE, shell=True)
-        print(run.stderr)
-        print(run.stdout)
         # Clean up?
         if not self.debug:
             try:
@@ -259,7 +255,9 @@ class Cluster:
                                                         path.join(out_p, plot_filename),
                                                                                 prefix,
                                                               path.join(out_p, "rearrangement_jac_cluster.r")),
-                             stderr=None, stdout=None, shell=True)
+                             stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+        print(run.stderr)
+        print(run.stdout)
         if not self.debug:
             try:
                 remove(path.join(out_p, filename))
