@@ -183,7 +183,7 @@ class Cluster:
         # Next, run an rscript to do the clustering
         cluster_filename = filename.replace(".len.", ".clstr.")
         if self.make_plots:
-            png_filename = filename.replace(".csv", ".png")
+            png_filename = filename.replace(".len.csv", ".png")
         else:
             png_filename = "NA"
         run = subprocess.run("Rscript --vanilla {5} {0} {1} {2} {3} {4}".format(
