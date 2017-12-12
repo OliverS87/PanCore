@@ -88,6 +88,7 @@ class IclengthClusterRscript:
             "# Get the k_val for which we achieved the maximum number of multi-element groups",
             "max_k <- which(multiclstr_count == max(multiclstr_count, na.rm = T))[1]",
             "# Cut the tree into max_k groups",
-            "cluster <- cutree(ic_len_data.mtrx.clust, k=max_k)"
+            "cluster <- cutree(ic_len_data.mtrx.clust, k=max_k)",
+            "write.table(cluster, out_file, quote = FALSE)"
         ]
         return script
