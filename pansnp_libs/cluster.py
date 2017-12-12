@@ -62,7 +62,7 @@ class Cluster:
                     data = line.split()
                     # If not including all seqs, check whether this seq is from between two core blocks
                     if not all_seqs:
-                        cb1, cb2 = data[2][6:].split(".")
+                        cb1, cb2 = [int(item) for item in data[2][6:].split(".")]
                         if cb1 in contig_end_ids or cb2 in contig_end_ids:
                             continue
                     si = int(data[0].split(":")[0][1:])
