@@ -127,7 +127,7 @@ if __name__ == '__main__':
             sp_rc = sp.run_parsnp(out_p, False, True)
         if sp_rc != 0:
             print("parsnp for {0} failed.\n{1}".format(prefix, sp_rc))
-            clean_up(out_p, prefix, keep_all_core)
+            clean_up(out_p, prefix, keep_all_core, debug)
             continue
         # Convert the IC stat file
         cluster = Cluster(os.path.join(out_p, "{0}.ic.csv".format(prefix)), min_cluster, plot, debug)
@@ -139,7 +139,7 @@ if __name__ == '__main__':
             clustering = cluster.cluster_length()
         if clustering != 0:
             print("clustering for {0} failed.".format(prefix))
-            clean_up(out_p, prefix, keep_all_core)
+            clean_up(out_p, prefix, keep_all_core, debug)
             continue
         # Open and parse the cluster file
         cluster_db = {}
@@ -156,10 +156,10 @@ if __name__ == '__main__':
         cluster_list = sorted(cluster_db.values(), key=lambda x: -len(x))
         # If there is only one cluster, stop here
         if len(cluster_list) == 1:
-            clean_up(out_p, prefix, keep_all_core)
+            clean_up(out_p, prefix, keep_all_core, debug)
             continue
         # Else, add cluster to the queue
         for i, clstr in enumerate(cluster_list):
             parsnp_queue.append(("{0}_{1}".format(prefix, i), clstr))
-        clean_up(out_p, prefix, keep_all_core)
+        clean_up(out_p, prefix, keep_all_core, debug)
     rscript.remove_script()
