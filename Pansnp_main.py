@@ -6,7 +6,7 @@ import sys
 from pansnp_libs.cluster import Cluster
 from pansnp_libs.iclength_deviation_eucl_cluster import IclengthClusterRscript
 from pansnp_libs.mash_ani_clustering import MashAnoClusteringRscript
-from .pansnp_libs.rearrangement_jac_cluster import RearrangementJacCluster
+from pansnp_libs.rearrangement_jac_cluster import RearrangementJacCluster
 from SimpleParSNP import SimpleParSNP
 
 
