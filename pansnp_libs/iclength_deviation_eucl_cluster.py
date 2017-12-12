@@ -77,7 +77,6 @@ class IclengthClusterRscript:
             "multiclstr_count <- c()",
             "for(k_val in c(2:nrow(ic_len_data.cast.filter))){",
             "  # Cut tree into k_val groups",
-            "  print(k_val)",
             "  cluster <- cutree(ic_len_data.mtrx.clust, k=k_val)",
             "  # Count the number of groups with more than one element",
             "  count <- sum(table(cluster)>1)",
