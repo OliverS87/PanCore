@@ -64,6 +64,7 @@ class Cluster:
                     if not all_seqs:
                         cb1, cb2 = [int(item) for item in data[2][6:].split(".")]
                         if cb1 in contig_end_ids or cb2 in contig_end_ids:
+                            active_out_f = None
                             continue
                     si = int(data[0].split(":")[0][1:])
                     try:
