@@ -57,7 +57,7 @@ if __name__ == '__main__':
     #parser.add_argument("-u", "--unaligned", action="store_true", help="Output unaligned regions?")
     parser.add_argument("-a", "--all_core", action="store_true",
                         help="Output core block alignment for each sample subset")
-    parser.add_argument("-d", "--debug", action="store_true",
+    parser.add_argument("-b", "--debug", action="store_true",
                         help="Keep temporary files")
     parser.add_argument("-i", "--plot", action="store_true",
                         help="Plot cluster for each sample subset")
