@@ -190,6 +190,8 @@ class Cluster:
             path.join(out_p, png_filename), self.min_nr_clstr,
         path.join(out_p, "iclength_deviation_eucl_cluster.r")), stderr=subprocess.PIPE,
             stdout=subprocess.PIPE, shell=True)
+        print(run.stderr)
+        print(run.stdout)
         # Clean up?
         if not self.debug:
             try:
