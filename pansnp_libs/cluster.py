@@ -254,8 +254,8 @@ class Cluster:
             png_filepath = "NA"
         run = subprocess.run("Rscript --vanilla {5} {0} {1} {2} {3} {4}".format(path.join(out_p, filename),
                                                             path.join(out_p, cluster_filename),
-                                                              self.min_nr_clstr,
                                                                                 png_filepath,
+                                                                                self.min_nr_clstr,
                                                                                 prefix,
                                                               path.join(out_p, "rearrangement_jac_cluster.r")),
                              stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
