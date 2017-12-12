@@ -75,14 +75,15 @@ class Cluster:
                     active_out_f = None
                     continue
                 # All other cases: nt seqs
-                try:
-                    useq_lengths[si] += len(line.strip())
-                except KeyError:
-                    useq_lengths[si] = len(line.strip())
-                try:
-                    active_out_f.write(line)
-                except AttributeError:
-                    pass
+                if active_out_f:
+                    try:
+                        useq_lengths[si] += len(line.strip())
+                    except KeyError:
+                        useq_lengths[si] = len(line.strip())
+                    try:
+                        active_out_f.write(line)
+                    except AttributeError:
+                        pass
 
         # Close all output files
         [f.close() for f in sep_files_dict.values()]
