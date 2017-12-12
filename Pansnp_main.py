@@ -68,7 +68,7 @@ if __name__ == '__main__':
     dist_param = args.distance
     cpu_count = args.cpu
     size_param = args.size
-    cluster_method = args.cluster_method
+    cluster_method = args.method
     keep_all_core = args.all_core
     plot = args.plot
     # Create at least two multi-cluster per iteration
