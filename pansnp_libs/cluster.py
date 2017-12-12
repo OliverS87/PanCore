@@ -10,15 +10,16 @@ import subprocess
 import math
 
 class Cluster:
-    def __init__(self, ic_stat_p, min_nr_clstr, make_plots):
+    def __init__(self, ic_stat_p, min_nr_clstr, make_plots, debug):
         self.ic_stat_p = ic_stat_p
         self.min_nr_clstr = min_nr_clstr
         self.make_plots = make_plots
+        self.debug = debug
 
 
     # Calculate pairwise ANI with mash
         # First, split up useqs in individual files, one for each si
-    def cluster_ani(self, cpu):
+    def cluster_ani(self, cpu, all_seqs):
         # Retrieve path to .unalign file from the ic_stat file (same folder, different filename)
         out_p, filename = path.split(self.ic_stat_p)
         # Modify the filename to access the .unalign file
@@ -36,24 +37,41 @@ class Cluster:
             mkdir(useqs_split_p)
         except FileExistsError:
             pass
-        # File name to global .unalign file
+        # Define the path to the .unalign file
         useq_p = path.join(out_p, filename_unalign)
+        # We next split the .unalign file into individual files, one for each SI
         # Hold links to individual split files in a dict
         sep_files_dict = {}
         # To determine optimum parameters for mash ANI estimation, we need to know the number of nucleotides
         # in the largest useq file
         useq_lengths = {}
+        # use all sequences for ANI clustering?
+        if not all_seqs:
+            # Find lowest and highest core block ID
+            core_block_ids = []
+            with open(useq_p, "r") as useq_f:
+                for line in useq_f:
+                    if line.startswith(">1:"):
+                        core_block_ids.extend([int(item) for item in line.split()[2][6:].split(".")])
+            contig_end_ids = [min(core_block_ids), max(core_block_ids)]
+        else:
+            contig_end_ids = []
         with open(useq_p, "r") as useq_f:
             for line in useq_f:
                 if line.startswith(">"):
                     data = line.split()
+                    # If not including all seqs, check whether this seq is from between two core blocks
+                    if not all_seqs:
+                        cb1, cb2 = data[2][6:].split(".")
+                        if cb1 in contig_end_ids or cb2 in contig_end_ids:
+                            continue
                     si = int(data[0].split(":")[0][1:])
                     try:
                         active_out_f = sep_files_dict[si]
                     except KeyError:
                         active_out_f = open(path.join(useqs_split_p, "useq_{0}.faa".format(si)), "w")
                         sep_files_dict[si] = active_out_f
-                elif line.startswith(">") or line.startswith("="):
+                elif line.startswith("="):
                     active_out_f = None
                     continue
                 # All other cases: nt seqs
@@ -65,6 +83,7 @@ class Cluster:
                     active_out_f.write(line)
                 except AttributeError:
                     pass
+
         # Close all output files
         [f.close() for f in sep_files_dict.values()]
         # Remove reference from useq files
@@ -76,66 +95,57 @@ class Cluster:
         # calculate k-mer length for mash distance estimation
         k = math.ceil(math.log10(99*max_length)/math.log10(4))
         # Run mash to sketch all useqs into one sketch
+        # Pipe stdout/stderr to prevent printing to screen
         run = subprocess.run("mash sketch -p {0} -k {1} -s {2} -o {3} {4}".
                              format(cpu, k, 5000, mash_sketch_p,
                                     " ".join([f.name for f in sep_files_dict.values()])),
-                             stdout=None, stderr=None, shell=True)
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         # Remove temporary useq files
-        [remove(file.name) for file in sep_files_dict.values()]
-        rmdir(useqs_split_p)
-        if run.returncode != 0:
-            try:
-                remove(mash_sketch_p)
-            except FileNotFoundError:
-                pass
-            return run.returncode
+        if not self.debug:
+            [remove(file.name) for file in sep_files_dict.values()]
+            rmdir(useqs_split_p)
         # Run mash to evaluate the pairwise distance
         #  ./mash dist  -p 1 -t talia.msh talia.msh > talia.out
         run = subprocess.run("mash dist -p {0} -t {1}.msh {1}.msh > {2}".
                              format(cpu, mash_sketch_p, mash_dist_p), shell=True)
-        if run.returncode != 0:
+        # If mash sketch or mash dist encountered an error, the return code of mash dist will be
+        # != 0
+        # Only proceed with clustering when mash ran successfull
+        if run.returncode == 0:
+            # Modify mash output, reduce identifier to si (currently it is path)
+            modified_out = []
+            with open(mash_dist_p, "r") as mash_dist_f:
+                # First correct header
+                header = next(mash_dist_f)
+                data = header.split()
+                modified_out.append([cell.rsplit("_")[-1].replace(".faa", "") for cell in data])
+                for line in mash_dist_f:
+                    data = line.split()
+                    data[0] = data[0].rsplit("_")[-1].replace(".faa", "")
+                    modified_out.append(data)
+            with open(mash_dist_p, "w") as new_mash_dist_f:
+                for line in modified_out:
+                    new_mash_dist_f.write("\t".join(line)+"\n")
+            # Next, run an rscript to do the clustering
+            cluster_p = path.join(out_p, filename.replace(".ic.", ".clstr."))
+            # Create a plot of this clustering?
+            if self.make_plots:
+                png_p = path.join(out_p, filename.replace(".ic.csv", ".png"))
+            else:
+                png_p = "NA"
+            run = subprocess.run("Rscript --vanilla {5} {0} {1} {2} {3} {4}".format(
+                mash_dist_p, cluster_p, png_p, self.min_nr_clstr, prefix,
+            path.join(out_p, "mash_ani_clustering.r")), stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+        # Clean up
+        if not self.debug:
             try:
-                remove(mash_sketch_p)
+                remove(mash_sketch_p+".msh")
             except FileNotFoundError:
                 pass
             try:
                 remove(mash_dist_p)
             except FileNotFoundError:
                 pass
-            return run.returncode
-        # Modify mash output, reduce identifier to si (currently it is path)
-        modified_out = []
-        with open(mash_dist_p, "r") as mash_dist_f:
-            # First correct header
-            header = next(mash_dist_f)
-            data = header.split()
-            modified_out.append([cell.rsplit("_")[-1].replace(".faa", "") for cell in data])
-            for line in mash_dist_f:
-                data = line.split()
-                data[0] = data[0].rsplit("_")[-1].replace(".faa", "")
-                modified_out.append(data)
-        with open(mash_dist_p, "w") as new_mash_dist_f:
-            for line in modified_out:
-                new_mash_dist_f.write("\t".join(line)+"\n")
-        # Next, run an rscript to do the clustering
-        cluster_p = path.join(out_p, filename.replace(".ic.", ".clstr."))
-        # Create a plot of this clustering?
-        if self.make_plots:
-            png_p =  path.join(out_p, filename.replace(".ic.csv", ".png"))
-        else:
-            png_p = "NA"
-        run = subprocess.run("Rscript --vanilla {5} {0} {1} {2} {3} {4}".format(
-            mash_dist_p, cluster_p, png_p, self.min_nr_clstr, prefix,
-        path.join(out_p, "mash_ani_clustering.r")), stderr=None, stdout=None, shell=True)
-        # Clean up
-        try:
-            remove(mash_sketch_p)
-        except FileNotFoundError:
-            pass
-        try:
-            remove(mash_dist_p)
-        except FileNotFoundError:
-            pass
         return run.returncode
 
     def cluster_length(self):

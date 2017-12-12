@@ -10,7 +10,9 @@ from pansnp_libs.rearrangement_jac_cluster import RearrangementJacCluster
 from SimpleParSNP import SimpleParSNP
 
 
-def clean_up(outpath, prefix, keep_all_core):
+def clean_up(outpath, prefix, keep_all_core, debug):
+    if debug:
+        return
     # Remove parsnp tmp out if it still exists
     shutil.rmtree(os.path.join(outpath, prefix), ignore_errors=True)
     # Remove parsnp config file if it still exists
@@ -59,8 +61,9 @@ if __name__ == '__main__':
                         help="Keep temporary files")
     parser.add_argument("-i", "--plot", action="store_true",
                         help="Plot cluster for each sample subset")
-    parser.add_argument("-m", '--method', choices=["r", "s", "l"],
-                        help="Cluster by 'R'earrangements, 'S'imilarity or 'L'ength", default="s")
+    parser.add_argument("-m", '--method', choices=["r", "sa", "sc", "l"],
+                        help="Cluster by 'R'earrangements, 'S'imilarity 'A'll or between 'C'ore blocks "
+                             "or 'L'ength", default="sc")
     parser.add_argument("-l", "--cluster", default=2, type=int, help="Max. number of multi-element cluster created during each cycle")
     args = parser.parse_args()
 
@@ -73,6 +76,7 @@ if __name__ == '__main__':
     cluster_method = args.method
     keep_all_core = args.all_core
     plot = args.plot
+    debug = args.debug
     # Create at least two multi-cluster per iteration
     min_cluster = min(2, args.cluster)
     prefix = args.prefix
@@ -95,7 +99,7 @@ if __name__ == '__main__':
     # when Pansnp terminates
     if cluster_method == "l":
         rscript = IclengthClusterRscript(out_p)
-    elif cluster_method == "s":
+    elif cluster_method == "sa" or cluster_method == "sc":
         rscript = MashAnoClusteringRscript(out_p)
     else:
         rscript = RearrangementJacCluster(out_p)
@@ -126,11 +130,11 @@ if __name__ == '__main__':
             clean_up(out_p, prefix, keep_all_core)
             continue
         # Convert the IC stat file
-        cluster = Cluster(os.path.join(out_p, "{0}.ic.csv".format(prefix)), min_cluster, plot)
+        cluster = Cluster(os.path.join(out_p, "{0}.ic.csv".format(prefix)), min_cluster, plot, debug)
         if cluster_method == "r":
             clustering = cluster.cluster_rearrangement()
-        elif cluster_method == "s":
-            clustering = cluster.cluster_ani(cpu_count)
+        elif cluster_method == "sa" or cluster_method == "sc":
+            clustering = cluster.cluster_ani(cpu_count, cluster_method == "sa")
         else:
             clustering = cluster.cluster_length()
         if clustering != 0:
