@@ -8,7 +8,7 @@ from pansnp_libs.iclength_deviation_eucl_cluster import IclengthClusterRscript
 from pansnp_libs.mash_ani_clustering import MashAnoClusteringRscript
 from pansnp_libs.rearrangement_jac_cluster import RearrangementJacCluster
 from SimpleParSNP import SimpleParSNP
-from .pansnp_libs.random_cluster import RandomCluster
+from pansnp_libs.random_cluster import RandomCluster
 
 
 def clean_up(outpath, prefix, keep_all_core, debug):
