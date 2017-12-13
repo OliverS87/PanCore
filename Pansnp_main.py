@@ -8,6 +8,7 @@ from pansnp_libs.iclength_deviation_eucl_cluster import IclengthClusterRscript
 from pansnp_libs.mash_ani_clustering import MashAnoClusteringRscript
 from pansnp_libs.rearrangement_jac_cluster import RearrangementJacCluster
 from SimpleParSNP import SimpleParSNP
+from .pansnp_libs.random_cluster import RandomCluster
 
 
 def clean_up(outpath, prefix, keep_all_core, debug):
@@ -94,7 +95,7 @@ if __name__ == '__main__':
     # Each element is a list of files that are going to be core clustered by parsnp
     # each item comes in this format (id[file1,file2,file3,...])
     # Each parsnp run gives rise to more cluster, these are appended to the end of the queue
-    parsnp_queue = [(prefix,[])]
+    parsnp_queue = [(prefix, [])]
     # Get all files in sample folder
     [parsnp_queue[0][1].append(os.path.join(samples_folder, item)) for item in os.listdir(samples_folder)
      if os.path.isfile(os.path.join(samples_folder, item))]
@@ -164,10 +165,29 @@ if __name__ == '__main__':
         if len(cluster_list) == 1:
             clean_up(out_p, prefix, keep_all_core, debug)
             continue
-        # Randomize?
-
         # Else, add cluster to the queue
         for i, clstr in enumerate(cluster_list):
             parsnp_queue.append(("{0}_{1}".format(prefix, i), clstr))
+        # The input files were split up into x clusters
+        # These clusters will be core-analyzed once they are on top of the queue
+        # To assess the significance of this clustering, we can now create random clusters
+        # of same length than the "real" ones, using the same file list
+        # These random clusters will be core analysed immediately
+        # We create 'random' sets of random clusters (cmd line arg)
+        rc = RandomCluster()
+        for r_count in range(0, random):
+            random_cluster_list = rc.randomize(cluster_list)
+            for i, file_list in enumerate(random_cluster_list):
+                # Prepare simpleparsnp run
+                sp = SimpleParSNP()
+                sp.set_dist(dist_param)
+                sp.set_reference(ref_p)
+                sp.set_threads(cpu_count)
+                sp.add_files(file_list)
+                prefix = "{0}_{1}_R{2}".format(prefix, i, r_count)
+                sp.set_prefix(prefix)
+                # We only want the log file for this run
+                sp.run_parsnp(out_p, False, False)
+                clean_up(out_p, prefix, False, False)
         clean_up(out_p, prefix, keep_all_core, debug)
     rscript.remove_script()
