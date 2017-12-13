@@ -64,6 +64,8 @@ if __name__ == '__main__':
                         help="Keep temporary files")
     parser.add_argument("-i", "--plot", action="store_true",
                         help="Plot cluster for each sample subset")
+    parser.add_argument("-r", "--random", action="store_true",
+                        help="Plot cluster for each sample subset", default=0)
     parser.add_argument("-m", '--method', choices=["r", "sa", "sc", "l"],
                         help="Cluster by 'R'earrangements, 'S'imilarity 'A'll or between 'C'ore blocks "
                              "or 'L'ength", default="sc")
@@ -80,6 +82,7 @@ if __name__ == '__main__':
     keep_all_core = args.all_core
     plot = args.plot
     debug = args.debug
+    random = args.random
     # Create at least two multi-cluster per iteration
     min_cluster = min(2, args.cluster)
     prefix = args.prefix
@@ -161,6 +164,8 @@ if __name__ == '__main__':
         if len(cluster_list) == 1:
             clean_up(out_p, prefix, keep_all_core, debug)
             continue
+        # Randomize?
+
         # Else, add cluster to the queue
         for i, clstr in enumerate(cluster_list):
             parsnp_queue.append(("{0}_{1}".format(prefix, i), clstr))
