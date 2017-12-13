@@ -184,10 +184,10 @@ if __name__ == '__main__':
                 sp.set_reference(ref_p)
                 sp.set_threads(cpu_count)
                 sp.add_files(file_list)
-                prefix = "{0}_{1}_R{2}".format(prefix, i, r_count)
-                sp.set_prefix(prefix)
+                r_prefix = "{0}_{1}_R{2}".format(prefix, i, r_count)
+                sp.set_prefix(r_prefix)
                 # We only want the log file for this run
                 sp.run_parsnp(out_p, False, False)
-                clean_up(out_p, prefix, False, False)
+                clean_up(out_p, r_prefix, False, False)
         clean_up(out_p, prefix, keep_all_core, debug)
     rscript.remove_script()
