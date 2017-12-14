@@ -81,7 +81,7 @@ if __name__ == '__main__':
     plot = args.plot
     debug = args.debug
     # Create at least two multi-cluster per iteration
-    min_cluster = min(2, args.cluster)
+    min_cluster = max(2, args.cluster)
     prefix = args.prefix
     # Create output folder
     if not os.path.isdir(out_p):
