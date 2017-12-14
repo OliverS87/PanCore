@@ -65,7 +65,7 @@ if __name__ == '__main__':
                         help="Keep temporary files")
     parser.add_argument("-i", "--plot", action="store_true",
                         help="Plot cluster for each sample subset")
-    parser.add_argument("-r", "--reduce", action="store_true",
+    parser.add_argument("-e", "--reduce", action="store_true",
                         help="Reduce input after each round of clustering to the unclustered parts")
     parser.add_argument("-m", '--method', choices=["r", "sa", "sc", "l"],
                         help="Cluster by 'R'earrangements, 'S'imilarity 'A'll or between 'C'ore blocks "
