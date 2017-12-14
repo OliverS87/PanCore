@@ -106,9 +106,10 @@ class CorrectXMFA:
                     this_contig_bounds = [item for item in assembly_contig_bounds.keys() if
                                           item[0] <= new_start and item[1] >= new_stop - 1]
                     if len(this_contig_bounds)  != 1:
-                        print("Failed to find: {0} {1} in\n{2}".format(new_start,
+                        print("Failed to find: {0} {1} in".format(new_start,
                                                                        new_stop, assembly_contig_bounds.keys()))
-                        return -1
+                        core_header[(seq_id, cluster_id)] = (seq_id, new_start, new_stop, data[1],cluster_id, 0, 0)
+                        continue
                     new_contig_id = assembly_contig_bounds[this_contig_bounds[0]]
                     # Calculate new start position on contig:
                     # This is the start position on merged, minus all previous contig lengths.
