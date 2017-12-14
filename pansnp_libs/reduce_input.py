@@ -116,7 +116,7 @@ if __name__ == '__main__':
                  "SRR1015296.fasta", "SRR1015297.fasta", "SRR1015299.fasta", "SRR1015295.fasta"]
     file_list = [path.join("ab_assemblies_subset", item) for item in file_list]
     useq = "ab/parsnp.unalign"
-    ri = ReduceInput("ab_assemblies_subset", "ab")
+    ri = ReduceInput("ab")
     #ri.useq_to_input(file_list, useq)
     #ri.map_back(file_list, "ab/cleo2.xmfa", "ab/cleo2.unalign")
     ri.mask_reference("NC_017162.gb.fna", "ab/parsnp.xmfa", "talia")

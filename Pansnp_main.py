@@ -8,7 +8,7 @@ from pansnp_libs.iclength_deviation_eucl_cluster import IclengthClusterRscript
 from pansnp_libs.mash_ani_clustering import MashAnoClusteringRscript
 from pansnp_libs.rearrangement_jac_cluster import RearrangementJacCluster
 from SimpleParSNP import SimpleParSNP
-from .pansnp_libs.reduce_input import ReduceInput
+from pansnp_libs.reduce_input import ReduceInput
 
 
 def clean_up(outpath, prefix, keep_all_core, debug):
@@ -112,11 +112,11 @@ if __name__ == '__main__':
         rscript = RearrangementJacCluster(out_p)
     rscript.write_script()
     # Load Reduce input module
-    reducer = ReduceInput()
+    reducer = ReduceInput(out_p)
     while parsnp_queue:
         print("Length of queue: {0}".format(len(parsnp_queue)))
         # 1. Get the first element of the queue and run parsnp on it
-        prefix, file_list = parsnp_queue.pop(0)
+        prefix, file_list, this_ref = parsnp_queue.pop(0)
         # if there is only one sequence to core-analyse, don't do it
         if len(file_list) <= 1:
             print("Skipping {0} because length <= 1".format(prefix))
@@ -124,7 +124,7 @@ if __name__ == '__main__':
         # Prepare simpleparsnp run
         sp = SimpleParSNP()
         sp.set_dist(dist_param)
-        sp.set_reference(ref_p)
+        sp.set_reference(this_ref)
         sp.set_threads(cpu_count)
         sp.add_files(file_list)
         sp.set_prefix(prefix)
@@ -133,11 +133,26 @@ if __name__ == '__main__':
         if cluster_method == "sa" or cluster_method == "sc":
             sp_rc = sp.run_parsnp(out_p, True, False)
         else:
-            sp_rc = sp.run_parsnp(out_p, False, True)
+            sp_rc = sp.run_parsnp(out_p, (False or reduce), True)
         if sp_rc != 0:
             print("parsnp for {0} failed.\n{1}".format(prefix, sp_rc))
             clean_up(out_p, prefix, keep_all_core, debug)
             continue
+        # Reduce input part
+        if reduce:
+            # Map the indices of this rounds .xmfa and .unalign back to the
+            # coordinate system of the original input
+            if reducer.sequences_added():
+                reducer.map_back(file_list, os.path.join(out_p, "{0}.xmfa".format(prefix),
+                                                         "{0}.unalign".format(prefix)))
+            # Create new input sample sequences from the unaligned part of this input
+            reducer.useq_to_input(file_list, os.path.join(out_p, "{0}.unalign".format(prefix)))
+            reducer.mask_reference(this_ref, "{0}.xmfa".format(prefix), prefix)
+            file_list = [os.path.join(out_p, "new_input", os.path.basename(item)) for item in file_list]
+            next_ref = os.path.join(out_p, "new_input", "{0}_ref.faa".format(prefix))
+        else:
+            next_ref = this_ref
+
         # Convert the IC stat file
         cluster = Cluster(os.path.join(out_p, "{0}.ic.csv".format(prefix)), min_cluster, plot, debug)
         if cluster_method == "r":
@@ -167,8 +182,9 @@ if __name__ == '__main__':
         if len(cluster_list) == 1:
             clean_up(out_p, prefix, keep_all_core, debug)
             continue
-        # Else, add cluster to the queue
+
+        # Add cluster to the queue
         for i, clstr in enumerate(cluster_list):
-            parsnp_queue.append(("{0}_{1}".format(prefix, i), clstr))
+            parsnp_queue.append(("{0}_{1}".format(prefix, i), clstr, next_ref))
         clean_up(out_p, prefix, keep_all_core, debug)
     rscript.remove_script()
