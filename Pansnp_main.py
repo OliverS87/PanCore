@@ -8,6 +8,7 @@ from pansnp_libs.iclength_deviation_eucl_cluster import IclengthClusterRscript
 from pansnp_libs.mash_ani_clustering import MashAnoClusteringRscript
 from pansnp_libs.rearrangement_jac_cluster import RearrangementJacCluster
 from SimpleParSNP import SimpleParSNP
+from .pansnp_libs.reduce_input import ReduceInput
 
 
 def clean_up(outpath, prefix, keep_all_core, debug):
@@ -64,6 +65,8 @@ if __name__ == '__main__':
                         help="Keep temporary files")
     parser.add_argument("-i", "--plot", action="store_true",
                         help="Plot cluster for each sample subset")
+    parser.add_argument("-r", "--reduce", action="store_true",
+                        help="Reduce input after each round of clustering to the unclustered parts")
     parser.add_argument("-m", '--method', choices=["r", "sa", "sc", "l"],
                         help="Cluster by 'R'earrangements, 'S'imilarity 'A'll or between 'C'ore blocks "
                              "or 'L'ength", default="sc")
