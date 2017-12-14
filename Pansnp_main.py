@@ -143,8 +143,8 @@ if __name__ == '__main__':
             # Map the indices of this rounds .xmfa and .unalign back to the
             # coordinate system of the original input
             if reducer.sequences_added():
-                reducer.map_back(file_list, os.path.join(out_p, "{0}.xmfa".format(prefix),
-                                                         "{0}.unalign".format(prefix)))
+                reducer.map_back(file_list, os.path.join(out_p, "{0}.xmfa".format(prefix)),
+                                                         os.path.join(out_p, "{0}.unalign".format(prefix)))
             # Create new input sample sequences from the unaligned part of this input
             reducer.useq_to_input(file_list, os.path.join(out_p, "{0}.unalign".format(prefix)))
             reducer.mask_reference(this_ref, os.path.join(out_p, "{0}.xmfa".format(prefix)), prefix)
