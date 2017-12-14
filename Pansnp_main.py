@@ -82,6 +82,7 @@ if __name__ == '__main__':
     cluster_method = args.method
     keep_all_core = args.all_core
     plot = args.plot
+    reduce = args.reduce
     debug = args.debug
     # Create at least two multi-cluster per iteration
     min_cluster = min(2, args.cluster)
