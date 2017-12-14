@@ -95,7 +95,7 @@ if __name__ == '__main__':
     # Each element is a list of files that are going to be core clustered by parsnp
     # each item comes in this format (id[file1,file2,file3,...])
     # Each parsnp run gives rise to more cluster, these are appended to the end of the queue
-    parsnp_queue = [(prefix,[])]
+    parsnp_queue = [(prefix,[],ref_p)]
     # Get all files in sample folder
     [parsnp_queue[0][1].append(os.path.join(samples_folder, item)) for item in os.listdir(samples_folder)
      if os.path.isfile(os.path.join(samples_folder, item))]
@@ -111,6 +111,8 @@ if __name__ == '__main__':
     else:
         rscript = RearrangementJacCluster(out_p)
     rscript.write_script()
+    # Load Reduce input module
+    reducer = ReduceInput()
     while parsnp_queue:
         print("Length of queue: {0}".format(len(parsnp_queue)))
         # 1. Get the first element of the queue and run parsnp on it

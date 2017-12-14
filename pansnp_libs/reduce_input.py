@@ -7,9 +7,8 @@ from os import makedirs
 from Bio import SeqIO
 
 class ReduceInput:
-    def __init__(self, original_input_sample_folder, pansnp_out_dir):
+    def __init__(self,  pansnp_out_dir):
         self.index_mapper = {}
-        self.original_input_sample_folder = original_input_sample_folder
         self.new_input_f = path.join(pansnp_out_dir, "new_input")
         makedirs(self.new_input_f, exist_ok=True)
 
