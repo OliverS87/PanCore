@@ -150,7 +150,6 @@ if __name__ == '__main__':
             reducer.mask_reference(this_ref, os.path.join(out_p, "{0}.xmfa".format(prefix)), prefix)
             file_list = [os.path.join(out_p, "new_input", os.path.basename(item)) for item in file_list]
             next_ref = os.path.join(out_p, "new_input", "{0}_ref.faa".format(prefix))
-            next_ref = this_ref
         else:
             next_ref = this_ref
 
