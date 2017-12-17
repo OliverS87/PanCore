@@ -9,7 +9,7 @@ from pansnp_libs.mash_ani_clustering import MashAnoClusteringRscript
 from pansnp_libs.rearrangement_jac_cluster import RearrangementJacCluster
 from SimpleParSNP import SimpleParSNP
 from pansnp_libs.reduce_input import ReduceInput
-
+from pansnp_libs.random_cluster import RandomCluster
 
 def clean_up(outpath, prefix, keep_all_core, debug):
     if debug:
@@ -65,6 +65,8 @@ if __name__ == '__main__':
                         help="Keep temporary files")
     parser.add_argument("-i", "--plot", action="store_true",
                         help="Plot cluster for each sample subset")
+    parser.add_argument("-r", "--random", type=int,
+                        help="For each clustering create x random clusterings with clusters of same size.")
     parser.add_argument("-e", "--reduce", action="store_true",
                         help="Reduce input after each round of clustering to the unclustered parts")
     parser.add_argument("-m", '--method', choices=["r", "sa", "sc", "l"],
@@ -84,6 +86,7 @@ if __name__ == '__main__':
     plot = args.plot
     reduce = args.reduce
     debug = args.debug
+    random = max(0, args.random)
     # Create at least two multi-cluster per iteration
     min_cluster = max(2, args.cluster)
     prefix = args.prefix
@@ -182,6 +185,13 @@ if __name__ == '__main__':
         if len(cluster_list) == 1:
             clean_up(out_p, prefix, keep_all_core, debug)
             continue
+        # Create some random clusters?
+        for r in range(0, random):
+            rc = RandomCluster()
+            random_cluster_list = rc.randomize(cluster_list)
+            # Add random cluster to the queue
+            for i, clstr in enumerate(random_cluster_list):
+                parsnp_queue.append(("{0}_{1}_R{2}".format(prefix, i, r), clstr, next_ref))
 
         # Add cluster to the queue
         for i, clstr in enumerate(cluster_list):
