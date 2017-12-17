@@ -56,7 +56,7 @@ class ClusterObject:
         left_sequence_cut_pos = left_fragment_length
         while len(child_sequence[:left_sequence_cut_pos].replace("-","")) < left_fragment_length:
             left_sequence_cut_pos += 1
-        right_sequence_cut_pos =
+        #right_sequence_cut_pos =
 
 
 
