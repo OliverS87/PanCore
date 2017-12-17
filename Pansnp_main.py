@@ -86,7 +86,10 @@ if __name__ == '__main__':
     plot = args.plot
     reduce = args.reduce
     debug = args.debug
-    random = max(0, args.random)
+    if args.random:
+        random = max(0, args.random)
+    else:
+        random = 0
     # Create at least two multi-cluster per iteration
     min_cluster = max(2, args.cluster)
     prefix = args.prefix
