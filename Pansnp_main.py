@@ -101,7 +101,9 @@ if __name__ == '__main__':
     # Each element is a list of files that are going to be core clustered by parsnp
     # each item comes in this format (id[file1,file2,file3,...])
     # Each parsnp run gives rise to more cluster, these are appended to the end of the queue
-    parsnp_queue = [(prefix,[],ref_p)]
+    # A cluster comes with a boolean subset? If subset? is FALSE, this cluster will not
+    # be split into subcluster. This is used for randomized cluster.
+    parsnp_queue = [(prefix,[], ref_p, True)]
     # Get all files in sample folder
     [parsnp_queue[0][1].append(os.path.join(samples_folder, item)) for item in os.listdir(samples_folder)
      if os.path.isfile(os.path.join(samples_folder, item))]
@@ -122,7 +124,7 @@ if __name__ == '__main__':
     while parsnp_queue:
         print("Length of queue: {0}".format(len(parsnp_queue)))
         # 1. Get the first element of the queue and run parsnp on it
-        prefix, file_list, this_ref = parsnp_queue.pop(0)
+        prefix, file_list, this_ref, subsetting = parsnp_queue.pop(0)
         # if there is only one sequence to core-analyse, don't do it
         if len(file_list) <= 1:
             print("Skipping {0} because length <= 1".format(prefix))
@@ -143,6 +145,10 @@ if __name__ == '__main__':
         if sp_rc != 0:
             print("parsnp for {0} failed.\n{1}".format(prefix, sp_rc))
             clean_up(out_p, prefix, keep_all_core, debug)
+            continue
+        # If the current cluster shall not be split into subcluster, stop here and continue with the nex
+        # cluster in the queue
+        if not subsetting:
             continue
         # Reduce input part
         if reduce:
@@ -194,10 +200,10 @@ if __name__ == '__main__':
             random_cluster_list = rc.randomize(cluster_list)
             # Add random cluster to the queue
             for i, clstr in enumerate(random_cluster_list):
-                parsnp_queue.append(("{0}_{1}_R{2}".format(prefix, i, r), clstr, next_ref))
+                parsnp_queue.append(("{0}_{1}_R{2}".format(prefix, i, r), clstr, next_ref, False))
 
         # Add cluster to the queue
         for i, clstr in enumerate(cluster_list):
-            parsnp_queue.append(("{0}_{1}".format(prefix, i), clstr, next_ref))
+            parsnp_queue.append(("{0}_{1}".format(prefix, i), clstr, next_ref, True))
         clean_up(out_p, prefix, keep_all_core, debug)
     rscript.remove_script()
