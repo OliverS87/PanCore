@@ -4,6 +4,7 @@
 
 import sys
 import os
+from random import shuffle
 from SimpleParSNP import SimpleParSNP
 
 
@@ -17,7 +18,7 @@ if __name__ == '__main__':
     cpu_count = int(sys.argv[4])
     out_folder = sys.argv[5]
     assemblies_dir = sys.argv[2]
-    substract = int(sys.argv[6])
+    substract = abs(int(sys.argv[6]))*-1
     nr_of_sets = int(sys.argv[7])
     prefix = sys.argv[8]
     file_list = [os.path.join(assemblies_dir, file) for file in os.listdir(assemblies_dir)
@@ -33,4 +34,26 @@ if __name__ == '__main__':
     simple_snp.add_files(file_list)
     simple_snp.run_parsnp(out_folder, False, False)
     # Delete xmfa file
-    os.remove(os.path.join(out_folder, "{0}_{1}.xmfa".format(prefix, len(file_list))))
+    try:
+        os.remove(os.path.join(out_folder, "{0}_{1}.xmfa".format(prefix, len(file_list))))
+    except FileNotFoundError:
+        print("Can't find output file")
+    for set in range(0, nr_of_sets):
+        this_file_list = [item for item in file_list]
+        shuffle(this_file_list)
+        this_file_list = this_file_list[:substract]
+        while this_file_list:
+            simple_snp = SimpleParSNP()
+            simple_snp.set_dist(dist_val)
+            simple_snp.set_size(21)
+            simple_snp.set_reference(ref_path)
+            simple_snp.set_threads(cpu_count)
+            simple_snp.set_prefix("{0}_R{1}_{2}".format(prefix, set, len(this_file_list)))
+            simple_snp.add_files(this_file_list)
+            simple_snp.run_parsnp(out_folder, False, False)
+            # Delete xmfa file
+            try:
+                os.remove(os.path.join(out_folder, "{0}_R{1}_{2}".format(prefix, set, len(this_file_list))))
+            except FileNotFoundError:
+                print("Can't find output file")
+
