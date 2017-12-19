@@ -48,6 +48,7 @@ if __name__ == '__main__':
             simple_snp.add_files(this_file_list)
             simple_snp.run_parsnp(out_folder, False, False)
             # Reduce file list
+            shuffle(this_file_list)
             this_file_list = this_file_list[:substract]
 
 
