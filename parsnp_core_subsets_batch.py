@@ -4,7 +4,7 @@
 
 import sys
 import os
-from PanSNP.SimpleParSNP import SimpleParSNP
+from SimpleParSNP import SimpleParSNP
 
 
 if __name__ == '__main__':
