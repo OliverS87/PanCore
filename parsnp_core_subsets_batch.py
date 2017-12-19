@@ -32,7 +32,7 @@ if __name__ == '__main__':
     first_simple_snp.set_threads(cpu_count)
     first_simple_snp.set_prefix("{0}_{1}".format(prefix, len(file_list)))
     first_simple_snp.add_files(file_list)
-    first_simple_snp.run_parsnp(out_folder, False, False)
+    #first_simple_snp.run_parsnp(out_folder, False, False)
 
     for set in range(0, nr_of_sets):
         this_file_list = [item for item in file_list]
