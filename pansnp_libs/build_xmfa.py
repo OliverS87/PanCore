@@ -86,7 +86,7 @@ class ClusterObject:
             right_cluster.add_sequence(file_name, r_sequence)
             # Now add all the other sequences from the other file names to the cluster
             # If for any sequence a cluster size <1 results, stop and forget this cluster
-            zero_length_cluster = False
+            zero_length_cluster_R = False
             for ofn in other_file_names:
                 # (global_start, global_stop, strand, contigID, contig_start)
                 other_index = self.indices[ofn]
@@ -98,7 +98,7 @@ class ClusterObject:
                 other_r_global_start = other_index[1]-other_r_nucleotide_count+1
                 other_r_global_stop = other_index[1]
                 if other_r_global_stop < other_r_global_start:
-                    zero_length_cluster = True
+                    zero_length_cluster_R = True
                     break
                 other_r_strand = other_index[2]
                 other_r_contigID = other_index[3]
@@ -107,7 +107,9 @@ class ClusterObject:
                                  other_r_contigID, other_r_contig_start)
                 right_cluster.add_index(ofn, other_r_index)
                 right_cluster.add_sequence(ofn, other_r_sequence)
-
+        # Modify the indices of this cluster, which will become the left-handed fragment
+        l_global_start = child_global_start
+        l_global_stop = parent_global_start-1
 
 
 
