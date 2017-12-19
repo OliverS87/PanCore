@@ -25,28 +25,28 @@ if __name__ == '__main__':
                           if os.path.isfile(os.path.join(assemblies_dir, file))]
 
     # Run a core analysis for all sample
-    simple_snp = SimpleParSNP()
-    simple_snp.set_dist(dist_val)
-    simple_snp.set_size(21)
-    simple_snp.set_reference(ref_path)
-    simple_snp.set_threads(cpu_count)
-    simple_snp.set_prefix("{0}_{1}".format(prefix, len(file_list)))
-    simple_snp.add_files(file_list)
-    simple_snp.run_parsnp(out_folder, False, False)
+    first_simple_snp = SimpleParSNP()
+    first_simple_snp.set_dist(dist_val)
+    first_simple_snp.set_size(21)
+    first_simple_snp.set_reference(ref_path)
+    first_simple_snp.set_threads(cpu_count)
+    first_simple_snp.set_prefix("{0}_{1}".format(prefix, len(file_list)))
+    first_simple_snp.add_files(file_list)
+    first_simple_snp.run_parsnp(out_folder, False, False)
 
     for set in range(0, nr_of_sets):
         this_file_list = [item for item in file_list]
         shuffle(this_file_list)
         this_file_list = this_file_list[:substract]
         while this_file_list:
-            simple_snp = SimpleParSNP()
-            simple_snp.set_dist(dist_val)
-            simple_snp.set_size(21)
-            simple_snp.set_reference(ref_path)
-            simple_snp.set_threads(cpu_count)
-            simple_snp.set_prefix("{0}_R{1}_{2}".format(prefix, set, len(this_file_list)))
-            simple_snp.add_files(this_file_list)
-            simple_snp.run_parsnp(out_folder, False, False)
+            set_simple_snp = SimpleParSNP()
+            set_simple_snp.set_dist(dist_val)
+            set_simple_snp.set_size(21)
+            set_simple_snp.set_reference(ref_path)
+            set_simple_snp.set_threads(cpu_count)
+            set_simple_snp.set_prefix("{0}_R{1}_{2}".format(prefix, set, len(this_file_list)))
+            set_simple_snp.add_files(this_file_list)
+            set_simple_snp.run_parsnp(out_folder, False, False)
             # Reduce file list
             shuffle(this_file_list)
             this_file_list = this_file_list[:substract]
