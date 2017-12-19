@@ -33,11 +33,7 @@ if __name__ == '__main__':
     simple_snp.set_prefix("{0}_{1}".format(prefix, len(file_list)))
     simple_snp.add_files(file_list)
     simple_snp.run_parsnp(out_folder, False, False)
-    # Delete xmfa file
-    try:
-        os.remove(os.path.join(out_folder, "{0}_{1}.xmfa".format(prefix, len(file_list))))
-    except FileNotFoundError:
-        print("Can't find output file")
+
     for set in range(0, nr_of_sets):
         this_file_list = [item for item in file_list]
         shuffle(this_file_list)
@@ -51,9 +47,7 @@ if __name__ == '__main__':
             simple_snp.set_prefix("{0}_R{1}_{2}".format(prefix, set, len(this_file_list)))
             simple_snp.add_files(this_file_list)
             simple_snp.run_parsnp(out_folder, False, False)
-            # Delete xmfa file
-            try:
-                os.remove(os.path.join(out_folder, "{0}_R{1}_{2}".format(prefix, set, len(this_file_list))))
-            except FileNotFoundError:
-                print("Can't find output file")
+            # Reduce file list
+            this_file_list = this_file_list[:substract]
+
 
