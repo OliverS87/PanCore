@@ -5,7 +5,7 @@
 import sys
 import os
 from random import shuffle
-from SimpleParSNP import SimpleParSNP
+from SimpleParSNP2 import simple_parsnp
 
 
 if len(sys.argv[1:]) != 8:
@@ -38,7 +38,7 @@ for set in range(0, nr_of_sets):
     shuffle(this_file_list)
     this_file_list = this_file_list[:substract]
     while this_file_list:
-        set_simple_snp = SimpleParSNP()
+        set_simple_snp = simple_parsnp()
         set_simple_snp.set_dist(dist_val)
         set_simple_snp.set_size(21)
         set_simple_snp.set_reference(ref_path)
