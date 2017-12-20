@@ -24,7 +24,7 @@ file_list = [os.path.join(assemblies_dir, file) for file in os.listdir(assemblie
                       if os.path.isfile(os.path.join(assemblies_dir, file))]
 
 # Run a core analysis for all sample
-first_simple_snp = SimpleParSNP()
+first_simple_snp = simple_parsnp()
 first_simple_snp.set_dist(dist_val)
 first_simple_snp.set_size(21)
 first_simple_snp.set_reference(ref_path)
