@@ -241,14 +241,15 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("reference", help="Full length reference sequence file")
-    parser.add_argument("sample_folder", help="Folder where all sample files are located")
+    parser.add_argument("assembly_folder", help="Folder where all other genome assembly files are located")
     parser.add_argument("-p", "--prefix", default="parsnp", help="Prefix for all output files")
     parser.add_argument("-o", "--outdir", default="parsnp", help="Output path")
     parser.add_argument("-c", "--cpu", default=1, type=int, help="Number of CPU cores")
     parser.add_argument("-s", "--size", default=21, type=int, help="Minimum core block size")
     parser.add_argument("-d", "--distance", default=30, type=int,
                         help="Maximum distance between two MUMS in a core block")
-    parser.add_argument("-u", "--unaligned", action="store_true", help="Output unaligned regions?")
+    parser.add_argument("-a", "--nc_alignment", action="store_true", help="Output non-core alignment?")
+    parser.add_argument("-t", "--table", action="store_true", help="Output intercore region presence/absence table")
     args = parser.parse_args()
 
     simple_snp = SimpleParSNP()
@@ -258,9 +259,9 @@ if __name__ == '__main__':
     simple_snp.set_threads(args.cpu)
     # Get all files in sample folder
     # Check if valid file
-    simple_snp.add_files([os.path.join(args.sample_folder, file) for file in os.listdir(args.sample_folder)
+    simple_snp.add_files([os.path.join(args.sample_folder, file) for file in os.listdir(args.assembly_folder)
                           if os.path.isfile(os.path.join(args.sample_folder, file))])
     simple_snp.set_prefix(args.prefix)
     # For standalone SimpleParSNP run, do not create the intracluster region stat fike
     # as this file is only useful for a pansnp run
-    simple_snp.run_parsnp(args.outdir, args.unaligned, False)
+    simple_snp.run_parsnp(args.outdir, args.nc_alignment, args.table)

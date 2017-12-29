@@ -27,6 +27,12 @@ class CorrectXMFA:
         # Function returns a dict with the corrected headers
         # or an error code
         start = dt.now()
+        # corrected_header contains only the sequence headers
+        # the actual nucleotide sequences have not been parsed
+        # Each sequence has a unique combination of assembly ID and cluster ID
+        # With this pair of values it is possible to match the corrected header sequence
+        # back to the corresponding nucleotide sequence
+        # This prevents the need for keeping all nucleotide sequences in memory
         corrected_header = self.__correct_header__()
         time_elapsed = (dt.now()-start).total_seconds()
         # Check if an error code was returned
@@ -117,13 +123,24 @@ class CorrectXMFA:
                     core_header[(seq_id, cluster_id)] = new_header
         return core_header
 
+    # Some clusters are redundant, i.e. they are contained completely within a larger cluster
+    # All cluster indices are sorted by start and stop values.
     def __find_redundant_clusters__(self, core_header):
         redundant_clusters = []
         core_fragment_indices = {si:[] for si in range(self.min_si, self.max_si + 1)}
+        # Format for core_fragments: {si:[(start,stop,clstrID), (start,stop,clstrID), ...]}
         [core_fragment_indices[item[0]].append((item[1], item[2], item[4])) for item in core_header.values()]
         for si in range(self.min_si, self.max_si + 1):
+            # Sort ascending by start and descending by stop, i.e. for clusters with the same start index
+            # the largest cluster is in the first position
             core_fragments = sorted(core_fragment_indices[si], key=lambda x: (x[0], -x[1]))
+            # Put all non-redundant clusters in core_fragments_no_red
+            # The first cluster in the sorted list cannot be redundant, so add it right now
             core_fragments_no_red = [core_fragments[0]]
+            # Compare each element in the sorted core_fragments list with the last element in the
+            # non_redundant clusters list. If the first element in the core_fragments list starts before
+            # the last non_redundant cluster ends, it is contained within that non_redundant cluster
+            # and needs to be filtered out
             for frag in core_fragments[1:]:
                 if frag[0] <= core_fragments_no_red[-1][1]:
                     redundant_clusters.append(frag[2])

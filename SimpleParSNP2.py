@@ -14,7 +14,6 @@
 
 from os import path
 import os
-import sys
 import subprocess
 from simpleparsnp_libs import correctXMFA
 from simpleparsnp_libs import generateUseq

@@ -1,15 +1,18 @@
 # Fragment locator:
-# Find the position of fragments found in parSNPs .xmfa and .unalign output files in the original sample input files.
-# Sequence fragments in .xmfa and .unalign are matched back to the original assembly file using blastn
+# Find the position of fragments found in parSNPs .xmfa file in the original sample input files.
+# Sequence fragments in .xmfa are matched back to the original assembly file using blastn
 # A blast DB is build from the assembly files, two DB for each file: One in which assembly contigs are merged into one
 # sequence in the order of their appearance in the file and one DB with contigs stored as separate sequences
-# The indices of the blast hits are checked against the indices reported in parSNPs output files.
+# The indices of the blast hits are checked against the indices reported in parSNPs output file.
 # parsSNPs output has two types of indices: Global and Contig. Global indices see the input assembly file as one large
 # sequence, with all contigs merged together in the order of their appearance. Contig indices refer to an actual
 # position on that specific contig.
 # These indices are checked:
 # parsnp.xmfa: Global start position of a fragment and a fragments contig start position.
-# parsnp.unalign: Global start position of a fragment
+# The script creates two output files: contig_offsets.txt  and merged_offsets.txt for index global start index
+# offsets and contig start index offsets. Columns of the tsv-formatted output files are:
+# SequenceIndex ContigID Strand-orientation index-offset and sequence length
+
 
 import sys
 import os
@@ -17,21 +20,20 @@ import subprocess
 
 # Check for correct number of cmdline arguments
 # Expected format:
-# parSNP.xmfa parSNP.unalign path_to_samples_folder reference.faa cpu_count out_path
-if len(sys.argv[1:]) != 6:
-    print("Usage: python3 {0} parSNP.xmfa parSNP.unalign path_to_samples_folder reference.faa "
+# parSNP.xmfa path_to_samples_folder reference.faa cpu_count out_path
+if len(sys.argv[1:]) != 5:
+    print("Usage: python3 {0} parSNP.xmfa path_to_samples_folder reference.faa "
           "cpu_count out_path".format(sys.argv[0]))
     exit(3)
 
 # Parse paths to input arguments from sys.argv
 xmfa_file = sys.argv[1]
-useq_file = sys.argv[2]
-samples_path = sys.argv[3]
-ref_file = sys.argv[4]
-cpu_count = sys.argv[5]
+samples_path = sys.argv[2]
+ref_file = sys.argv[3]
+cpu_count = sys.argv[4]
 
 # Create the output folder if it does not exist
-out_path = sys.argv[6]
+out_path = sys.argv[5]
 if not os.path.isdir(out_path):
     os.makedirs(out_path, exist_ok=True)
 
@@ -64,8 +66,6 @@ max_si = max(seq_db.keys())
 # Define output files, one for each SI
 query_files = {index:open(os.path.join(out_path, "seq{0}_query.faa".format(index)), "w")
                for index in range(min_si, max_si+1)}
-#for index in range(min_si, max_si+1):
-#    query_files[index] = open(os.path.join(out_path, "seq{0}_query.faa".format(index)), "w")
 
 # active_output_file points to the file handler currently in use
 active_output_file = None
@@ -116,43 +116,6 @@ for si in seq_db.keys():
                     if not line.startswith(">") and not len(line.strip()) == 0:
                         single_faa_file.write(line)
 
-
-# Convert .unalign file to multiple multi-fasta files, one for each SI.
-# Define output files, one for each SI
-useq_query_files = {index:open(os.path.join(out_path, "useq{0}_query.faa".format(index)), "w")
-                    for index in range(min_si, max_si+1)}
-#for index in range(min_si, max_si+1):
-#    useq_query_files[index] = open(os.path.join(out_path, "useq{0}_query.faa".format(index)), "w")
-# active_output_file points to the file handler currently in use
-active_output_ufile = None
-
-# Iterate once through the .unalign file
-# Everytime we encounter a header line, the active output file is switched according to the SI in the header
-# The header has to be rewritten so that it can be parsed by blastn
-with open(useq_file, "r") as useqf:
-    for line in useqf:
-        if line.startswith(">"):
-            # Extract information from header
-            this_seq_si = int(line.strip()[1:line.index(":")])
-            header = line[line.index(":") + 1:].split()
-            # Unaligned file does not have contig number and contig start value
-            contig_start = 0
-            contig_index = 0
-            strand_orientation = header[1]
-            overall_start = header[0].split("-")[0]
-            overall_stop = header[0].split("-")[1]
-            # Define active output file
-            active_output_ufile = useq_query_files[this_seq_si]
-            # Rewrite header
-            active_output_ufile.write(">lcl|{0}_{1}_{2}_{3}_{4}\n".format(overall_start,
-                                                                 overall_stop, strand_orientation, contig_start,
-                                                                 contig_index))
-        elif not line.startswith("#") and not line.startswith("="):
-            active_output_ufile.write(line)
-
-
-# Close useq query files
-[uqfile.close() for uqfile in useq_query_files.values()]
 
 # For each SI, run the fragments from the .xmfa file against the blast DBs created from the input files
 # si == 1 points to the reference file which is stored in a different location then the other assembly files
@@ -352,80 +315,3 @@ with open(os.path.join(out_path, "merged_offsets.txt"), "w") as out_file:
             for minusstrand_offset in offset[1][1]:
                 out_file.write("{0}\t{1}\t-\t{2}\t{3}\n".
                                format(si, contig_id, minusstrand_offset[0],minusstrand_offset[2]))
-
-# Check the indices reported in the .unalign parsnp ouput file
-# No start-on-contig indices are reported in this file, only global start/stop on the merged assembly/reference file
-
-# For each si, run the unaligned sequences against the blastdb created from the merged contigs
-for si in range(min_si, max_si+1):
-    subprocess.run(["blastn", "-db", os.path.join(out_path, "merged_blastdb_{0}".format(si)), "-query",
-                           os.path.join(out_path, "useq{0}_query.faa".format(si)), "-parse_deflines", "-outfmt",
-                           "6 qseqid sstart send mismatch", "-num_threads", cpu_count,
-                            "-out", os.path.join(out_path, "useq_blastres_{0}".format(si))])
-
-# Analyse each blast run
-merged_offset = {}
-for si in range(min_si, max_si+1):
-    si_merged_offset = {}
-    with open(os.path.join(out_path, "useq_blastres_{0}".format(si)), "r") as useq_file:
-        filtered_file = {}
-        for line in useq_file:
-            data = line.replace("_", " ").split()
-            if len(data) != 8:
-                continue
-            # Check for misplaced blast hits:
-            # 1. Length of aligned seq and blast hit doesnt't match 100% (include the error made by parSNP that indices
-            # for useqs can be off by one:
-            if abs(abs(int(data[0])-int(data[1]))-abs(int(data[5])-int(data[6]))) > 1:
-                continue
-            # 2. Check for mismatches
-            if int(data[7]) != 0:
-                continue
-            # Calculate difference between sequence start position on contig as reported by parsnp and actual start
-            # position as reported by blast
-            # For sequence fragments aligned in reverse complement, use stop position reported by blast
-            if data[2] == "+":
-                offset = abs(int(data[0])-int(data[5])+1)
-            else:
-                offset = abs(int(data[0])-int(data[6])+1)
-            line_id = line.split()[0]
-            # For queries that have multiple hits, keep only that one with the lowest offset (abs)
-            if line_id not in filtered_file:
-                filtered_file[line_id] = (line, offset)
-            # If offset stored in filtered_file for this query ID is larger than the offset calculated in this loop,
-            # replace the stored line with the current line
-            if filtered_file[line_id][1] > offset:
-                filtered_file[line_id] = (line, offset)
-        # Retrieve lines from filtered_file
-        filtered_lines = [item[0] for item in filtered_file.values()]
-        for line in filtered_lines:
-            data = line.replace("_", " ").split()
-            # Sort offsets by contig ID and strand
-            contig_id = data[4]
-            if not contig_id in si_contig_offset:
-                si_contig_offset[contig_id] = ([], [])
-            if data[2]=="+":
-                si_contig_offset[contig_id][0].append((int(data[0])-int(data[5])+1,
-                                                      int(data[0]), abs(int(data[0])-int(data[1]))+1))
-            else:
-                si_contig_offset[contig_id][1].append((int(data[0])-int(data[6])+1,
-                                                      int(data[0]), abs(int(data[0])-int(data[1]))+1))
-    # Add the offsets for this SI to the overall collection of offsets
-    merged_offset[si] = si_contig_offset
-
-# Write unaligned offsets to file
-# Format: SeqID ContigID Strand Offset SeqSize
-with open(os.path.join(out_path, "useq_offsets.txt"), "w") as out_file:
-    for si in range(min_si, max_si+1):
-        si_merged_offset = merged_offset[si]
-        offsets_sorted = sorted(si_merged_offset.items(), key=lambda x: x[0])
-        for offset in offsets_sorted:
-            contig_id = offset[0]
-            for plusstrand_offset in offset[1][0]:
-                out_file.write("{0}\t{1}\t+\t{2}\t{3}\n".
-                               format(si, contig_id, plusstrand_offset[0],plusstrand_offset[2]))
-            for minusstrand_offset in offset[1][1]:
-                out_file.write("{0}\t{1}\t-\t{2}\t{3}\n".
-                               format(si, contig_id, minusstrand_offset[0],minusstrand_offset[2]))
-
-
