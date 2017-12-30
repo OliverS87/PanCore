@@ -258,7 +258,7 @@ if __name__ == '__main__':
     # Get all files in sample folder
     # Check if valid file
     parcore_run.add_files([os.path.join(args.sample_folder, file) for file in os.listdir(args.assembly_folder)
-                          if os.path.isfile(os.path.join(args.sample_folder, file))])
+                          if os.path.isfile(os.path.join(args.assembly_folder, file))])
     parcore_run.set_prefix(args.prefix)
     # Run ParCore
     parcore_run.run_parcore(args.outdir, args.nc_alignment, args.table)
