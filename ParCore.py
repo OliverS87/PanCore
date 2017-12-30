@@ -9,22 +9,21 @@
 # sets all parameters for the core analysis run.
 # This wrapper first generates this INI files based on a set of cmdline arguments
 # before the binary is run with the generated INi file.
-# Following a run, indices in the original xmfa output are corrected
-# and additional files can be created
+# Following a run, indices in the original xmfa output are corrected, redundant cluster are detected and removed
+# and the non-core sequences are clustered and returned
 
 from os import path
 import os
-import sys
 import subprocess
-from simpleparsnp_libs import correctXMFA
-from simpleparsnp_libs import generateUseq
+from .ParCoreLibs import correctXMFA
+from .ParCoreLibs import generateUseq
 from Bio import SeqIO
 from datetime import datetime as dt
 
 
-class SimpleParSNP:
+class ParCore:
     def __init__(self):
-        # Set defaults for parsnp parameters:
+        # Set defaults for parsnp_core parameters:
         # Max. allowed distance between two seeds during LCB formation
         self.dist = 30
         # Min. cluster size
@@ -159,7 +158,7 @@ class SimpleParSNP:
         self.log_p = path.join(out_dir, "{0}.log".format(self.prefix))
         # Create  log file
         with open(self.log_p, "w") as log_f:
-            log_f.write("---simpleparsnp V0.0.1---\n")
+            log_f.write("---ParCore V0.0.1---\n")
 
     # Write to log file
     def write_log(self, message):
@@ -171,16 +170,16 @@ class SimpleParSNP:
     # 1. Output folder
     # 2. Should a file with all non-core (i.e. unaligned) sequences be generated?
     # 3. Should a file with statistics about the non-core region be generated?
-    def run_parsnp(self, out_dir, generate_useq, generate_icstats):
+    def run_parcore(self, out_dir, generate_useq, generate_icstats):
         start = dt.now()
         if not path.isdir(path.join(out_dir, self.prefix)):
             os.makedirs(path.join(out_dir, self.prefix), exist_ok=True)
         self.create_log(out_dir)
         self.generate_ini(out_dir)
-        self.write_log("Running parsnp on {0} samples using {1} as reference.\n".format(len(self.files_p),
+        self.write_log("Running ParCore on {0} samples using {1} as reference.\n".format(len(self.files_p),
                                                                                         path.basename(self.ref_p)))
         # Write parsnp parameters to log file
-        self.write_log("Parsnp parameters:\nMaxDist={0},MinClstrSize={1},MaxDiagDiff=0.12\n".
+        self.write_log("ParCore parameters:\nMaxDist={0},MinClstrSize={1},MaxDiagDiff=0.12\n".
                        format(self.dist, self.min_cluster_size))
         # Write file names to log file
         for i, p in enumerate(self.files_p, 2):
@@ -192,7 +191,7 @@ class SimpleParSNP:
                              close_fds=True, executable="/bin/bash")
         # Return RC if failed
         if run.returncode != 0:
-            self.write_log("Parsnp run failed. Bummer :(\n")
+            self.write_log("ParCore run failed. Bummer :(\n")
             return run.returncode
         # parsnp creates its own log file, join its content to "our" log file
         with open(os.path.join(out_dir, self.prefix, "parsnpAligner.log"), "r") as parsnp_log_f:
@@ -202,8 +201,6 @@ class SimpleParSNP:
             for line in parsnp_log_f:
                 self.write_log(line)
 
-        # Rename raw xmfa output file
-        #os.rename(path.join(out_dir, "parsnpAligner.xmfa"), path.join(out_dir, "{0}.xmfa".format(self.prefix)))
         # Correct header lines in raw xmfa output
         xmfa_corrector = correctXMFA.CorrectXMFA(self.dist, path.join(out_dir, self.prefix, "parsnpAligner.xmfa"),
                                         self.min_si,  self.max_si, self.input_contigs_dict, self.write_log)
@@ -237,13 +234,14 @@ class SimpleParSNP:
         return 0
 
 
+# Standalone tool use
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("reference", help="Full length reference sequence file")
     parser.add_argument("assembly_folder", help="Folder where all other genome assembly files are located")
-    parser.add_argument("-p", "--prefix", default="parsnp", help="Prefix for all output files")
-    parser.add_argument("-o", "--outdir", default="parsnp", help="Output path")
+    parser.add_argument("-p", "--prefix", default="parcore", help="Prefix for all output files")
+    parser.add_argument("-o", "--outdir", default="parcore", help="Output path")
     parser.add_argument("-c", "--cpu", default=1, type=int, help="Number of CPU cores")
     parser.add_argument("-s", "--size", default=21, type=int, help="Minimum core block size")
     parser.add_argument("-d", "--distance", default=30, type=int,
@@ -252,16 +250,15 @@ if __name__ == '__main__':
     parser.add_argument("-t", "--table", action="store_true", help="Output intercore region presence/absence table")
     args = parser.parse_args()
 
-    simple_snp = SimpleParSNP()
-    simple_snp.set_dist(args.distance)
-    simple_snp.set_size(args.size)
-    simple_snp.set_reference(args.reference)
-    simple_snp.set_threads(args.cpu)
+    parcore_run = ParCore()
+    parcore_run.set_dist(args.distance)
+    parcore_run.set_size(args.size)
+    parcore_run.set_reference(args.reference)
+    parcore_run.set_threads(args.cpu)
     # Get all files in sample folder
     # Check if valid file
-    simple_snp.add_files([os.path.join(args.sample_folder, file) for file in os.listdir(args.assembly_folder)
+    parcore_run.add_files([os.path.join(args.sample_folder, file) for file in os.listdir(args.assembly_folder)
                           if os.path.isfile(os.path.join(args.sample_folder, file))])
-    simple_snp.set_prefix(args.prefix)
-    # For standalone SimpleParSNP run, do not create the intracluster region stat fike
-    # as this file is only useful for a pansnp run
-    simple_snp.run_parsnp(args.outdir, args.nc_alignment, args.table)
+    parcore_run.set_prefix(args.prefix)
+    # Run ParCore
+    parcore_run.run_parcore(args.outdir, args.nc_alignment, args.table)
