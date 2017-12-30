@@ -15,8 +15,8 @@
 from os import path
 import os
 import subprocess
-from .ParCoreLibs import correctXMFA
-from .ParCoreLibs import generateUseq
+from ParCoreLibs import correctXMFA
+from ParCoreLibs import generateUseq
 from Bio import SeqIO
 from datetime import datetime as dt
 
