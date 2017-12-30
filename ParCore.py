@@ -165,6 +165,28 @@ class ParCore:
         with open(self.log_p, "a") as log_f:
             log_f.write(message)
 
+    # Remove temporary files
+    # If ParCore did not run successfully, some files may not be present
+    # -> catch OSError
+    def clean_up(self, outdir):
+        try:
+            os.remove(path.join(outdir, self.prefix, "parsnpAligner.log"))
+        except OSError:
+            pass
+        try:
+            os.remove(path.join(outdir, self.prefix, "parsnpAligner.xmfa"))
+        except OSError:
+            pass
+        try:
+            os.rmdir(path.join(outdir, self.prefix))
+        except OSError:
+            pass
+        try:
+            os.remove(path.join(outdir, "{0}parsnp_config.ini".format(self.prefix)))
+        except OSError:
+            pass
+
+
     # Main function that invokes all functions required for a successfull parsnp binary run
     # Requires three arguments:
     # 1. Output folder
@@ -192,6 +214,7 @@ class ParCore:
         # Return RC if failed
         if run.returncode != 0:
             self.write_log("ParCore run failed. Bummer :(\n")
+            self.clean_up(out_dir)
             return run.returncode
         # parsnp creates its own log file, join its content to "our" log file
         with open(os.path.join(out_dir, self.prefix, "parsnpAligner.log"), "r") as parsnp_log_f:
@@ -209,6 +232,7 @@ class ParCore:
         try:
             int(corrected_headers)
             self.write_log("Error while correcting xmfa. Bummer :(\n")
+            self.clean_up(out_dir)
             return -2
         except TypeError:
             pass
@@ -221,13 +245,10 @@ class ParCore:
         try:
             useq_generator.generate_useqs(generate_useq, generate_icstats)
         except Exception:
-            self.write_log("Error while creating unaligned file xmfa. Bummer :(\n")
+            self.write_log("Error while creating non-core sequence file. Bummer :(\n")
             return -3
         # Clean up
-        os.remove(path.join(out_dir, self.prefix, "parsnpAligner.log"))
-        os.remove(path.join(out_dir, self.prefix, "parsnpAligner.xmfa"))
-        os.rmdir(path.join(out_dir, self.prefix))
-        os.remove(path.join(out_dir, "{0}parsnp_config.ini".format(self.prefix)))
+        self.clean_up(out_dir)
         time_elapsed = (dt.now() - start).total_seconds()
         self.write_log("Finished aligning {0}+1 sequences on {1} CPUs in {2} seconds.\n".
                        format(len(self.files_p), self.threads, time_elapsed))
