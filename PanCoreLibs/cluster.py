@@ -1,7 +1,9 @@
-# Calculate clusters from SimpleParSNPs ic.stat file
+# Group assemblies into cluster
+# Methods use ParCores intercore region stat table or the unaligned sequence xmfa file
+# Cluster methods:
 # a) Cluster based on rearrangements
-# b) Cluster based on length differences in IC regions
-# c) Cluster based on mash all-vs-all run on unaligned sequences
+# b) Cluster based on mash all-vs-all run on unaligned sequence
+# c) Cluster based on length differences in IC regions
 from os import path
 from os import mkdir as mkdir
 from os import remove
@@ -9,6 +11,12 @@ from os import rmdir
 import subprocess
 import math
 
+
+# Each cluster method requires
+# - Path to intercore region stat table (path to unaligned sequence file is derived from it)
+# - Minimum number of multi-assembly cluster
+# - Create a plot of each cluster result?
+# - Debug mode? I.e. keep temporary files?
 class Cluster:
     def __init__(self, ic_stat_p, min_nr_clstr, make_plots, debug):
         self.ic_stat_p = ic_stat_p
@@ -16,9 +24,86 @@ class Cluster:
         self.make_plots = make_plots
         self.debug = debug
 
+    # a) Cluster based on sequence rearrangements:
+    # Algorithm looks for intercore regions that are missing (with respect to the reference), i.e.
+    # -> deleted intercore regions
+    def cluster_rearrangement(self):
+        # Find intercore regions that are not found in assemblies != reference
+        del_ic_regions = {}
+        # Open and parse the tabular intercore region stat file
+        with open(self.ic_stat_p, "r") as ic_stat_f:
+            # Skip header
+            next(ic_stat_f)
+            for line in ic_stat_f:
+                data = line.strip().split(",")
+                cb1 = int(data[1])
+                cb2 = int(data[2])
+                si = int(data[0])
+                icb_id = data[1] + "." + data[2]
+                type = data[6]
+                try:
+                    del_ic_region = del_ic_regions[(cb1, cb2)]
+                    del_ic_region[0] += 1
+                    del_ic_region[1].add(type)
+                    del_ic_region[2].append((si, icb_id, type))
+                except KeyError:
+                    del_ic_regions[(cb1, cb2)] = [1, set(type), [(si, icb_id, type)]]
+        # Find max SI (we need this value for some iterations later)
+        max_si = max([item[0] for sublist in del_ic_regions.values() for item in sublist[2]])
+        # From the list of all intercore regions, keep only those where a deletion occurs for
+        # at least ony assembly
+        del_ic_regions = {key: val for key, val in del_ic_regions.items() if "D" in val[1]}
+        # The cluster algorithm cannot deal well with 'NA's. Remove all intercore regions for whom
+        # we don't have information for all assemblies
+        del_ic_regions = {key: val[2] for key, val in del_ic_regions.items() if val[0] == max_si}
+        # Sort intercore regions by ID and assembly ID
+        del_ic_regions = sorted([val for sublist in del_ic_regions.values() for val in sublist],
+                                key=lambda x: (x[1], x[0]))
+        # Convert the dict into a presence/absence matrix:
+        # For each assembly ID, we list if intercore region X is present(1) or absent (0)
+        feature_vector = {(reg[0], reg[1]): "1" if reg[2] == "P" else "0" for reg in del_ic_regions}
+        # Sort intercore regions by name (not necessary, but makes plot look nicer)
+        sorted_intercore_ids = sorted(list(set([item[1] for item in del_ic_regions])))
+        # Define output path for feature vector: Same as intercore tabular stat file
+        out_p, filename = path.split(self.ic_stat_p)
+        filename = filename.replace(".ic.", ".fdel.")
+        prefix = filename.split(".")[0]
+        # Write feature vector to file
+        with open(path.join(out_p, filename), "w") as feat_out_f:
+            # Write header
+            feat_out_f.write("si," + ",".join(sorted_intercore_ids) + "\n")
+            for si in range(1, max_si + 1):
+                feat_out_f.write(str(si))
+                for ic_reg in sorted_intercore_ids:
+                    feat_out_f.write("," + feature_vector[(si, ic_reg)])
+                feat_out_f.write("\n")
+        # Next, run an rscript to do the clustering
+        # First, define the output file name for the cluster results
+        cluster_filename = filename.replace(".fdel.",".clstr.")
+        # Should the Rscript make plots for the clustering?
+        # If so, define the output path
+        if self.make_plots:
+            png_filepath = path.join(out_p, filename.replace(".fdel.csv",".png"))
+        else:
+            png_filepath = "NA"
+        # Run Rscript
+        run = subprocess.run("Rscript --vanilla {5} {0} {1} {2} {3} {4}".format(path.join(out_p, filename),
+                                                            path.join(out_p, cluster_filename),
+                                                                                png_filepath,
+                                                                                self.min_nr_clstr,
+                                                                                prefix,
+                                                              path.join(out_p, "rearrangement_jac_cluster.r")),
+                             stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+        # Remove temporary files
+        if not self.debug:
+            try:
+                remove(path.join(out_p, filename))
+            except FileNotFoundError:
+                pass
+        return run.returncode
 
     # Calculate pairwise ANI with mash
-        # First, split up useqs in individual files, one for each si
+    # First, split up useqs in individual files, one for each si
     def cluster_ani(self, cpu, all_seqs):
         # Retrieve path to .unalign file from the ic_stat file (same folder, different filename)
         out_p, filename = path.split(self.ic_stat_p)
@@ -200,71 +285,5 @@ class Cluster:
         return run.returncode
 
 
-    def cluster_rearrangement(self):
-        # Identify CB Nr. signaling 5" and 3" end
-        min_cb = None
-        max_cb = None
-        del_ic_regions = {}
-        with open(self.ic_stat_p, "r") as ic_stat_f:
-            # Skip header
-            next(ic_stat_f)
-            for line in ic_stat_f:
-                data = line.strip().split(",")
-                cb1 = int(data[1])
-                cb2 = int(data[2])
-                si = int(data[0])
-                icb_id = data[1] + "." + data[2]
-                type = data[6]
-                try:
-                    del_ic_region = del_ic_regions[(cb1, cb2)]
-                    del_ic_region[0] += 1
-                    del_ic_region[1].add(type)
-                    del_ic_region[2].append((si, icb_id, type))
-                except KeyError:
-                    del_ic_regions[(cb1, cb2)] = [1, set(type), [(si, icb_id, type)]]
-        # Find max SI
-        max_si = max([item[0] for sublist in del_ic_regions.values() for item in sublist[2]])
-        # Filter regions, keep only those where a D occurs
-        del_ic_regions = {key: val for key, val in del_ic_regions.items() if "D" in val[1]}
-        # Filte regions, keep only those where there is one occurence per SI
-        del_ic_regions = {key: val[2] for key, val in del_ic_regions.items() if val[0] == max_si}
-        # Sort regions by region and si
-        del_ic_regions = sorted([val for sublist in del_ic_regions.values() for val in sublist],
-                                key=lambda x: (x[1], x[0]))
-        # Create the feature vector matrix for jaccard clustering of IC regions
-        feature_vector = {(reg[0], reg[1]): "1" if reg[2] == "P" else "0" for reg in del_ic_regions}
-        sorted_ic_reg_list = sorted(list(set([item[1] for item in del_ic_regions])))
-        # Define output path
-        out_p, filename = path.split(self.ic_stat_p)
-        filename = filename.replace(".ic.", ".fdel.")
-        prefix = filename.split(".")[0]
-        with open(path.join(out_p, filename), "w") as feat_out_f:
-            # Write header
-            feat_out_f.write("si," + ",".join(sorted_ic_reg_list) + "\n")
-            for si in range(1, max_si + 1):
-                feat_out_f.write(str(si))
-                for ic_reg in sorted_ic_reg_list:
-                    feat_out_f.write("," + feature_vector[(si, ic_reg)])
-                feat_out_f.write("\n")
-        # Next, run an rscript to do the clustering
-        cluster_filename = filename.replace(".fdel.",".clstr.")
-        if self.make_plots:
-            png_filepath = path.join(out_p, filename.replace(".fdel.csv",".png"))
-        else:
-            png_filepath = "NA"
-        run = subprocess.run("Rscript --vanilla {5} {0} {1} {2} {3} {4}".format(path.join(out_p, filename),
-                                                            path.join(out_p, cluster_filename),
-                                                                                png_filepath,
-                                                                                self.min_nr_clstr,
-                                                                                prefix,
-                                                              path.join(out_p, "rearrangement_jac_cluster.r")),
-                             stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
-        print(run.stderr)
-        print(run.stdout)
-        if not self.debug:
-            try:
-                remove(path.join(out_p, filename))
-            except FileNotFoundError:
-                pass
-        return run.returncode
+
 
