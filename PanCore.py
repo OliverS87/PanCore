@@ -146,11 +146,11 @@ if __name__ == '__main__':
             print("parsnp for {0} failed.\n{1}".format(prefix, sp_rc))
             clean_up(out_p, prefix, keep_all_core, debug)
             continue
-        # If the current cluster shall not be split into subcluster, stop here and continue with the nex
+        # If the current cluster shall not be split into subcluster, stop here and continue with the next
         # cluster in the queue
         if not subsetting:
             continue
-        # Reduce input part
+        # Is the reduce input flag set?
         if reduce:
             # Map the indices of this rounds .xmfa and .unalign back to the
             # coordinate system of the original input
@@ -165,7 +165,16 @@ if __name__ == '__main__':
         else:
             next_ref = this_ref
 
-        # Convert the IC stat file
+        # Split the assemblies associated with this node into subsets
+        # The cluster method is by
+        # a) Rearrangements: Missing intercore regions indicate sequence rearrangements
+        # b) Average nucleotide identity: ANI between the sequences, either full length sequences or the
+        #   region between core blocks
+        # c) Insertions/deletions: Differences in intercore region lengths
+        # Data used for the clustering is the tabular intercore stat file (length and rearrangement) or
+        # the unaligned sequences file (ANI) produced by ParCore.
+        # Every cluster method returns the cluster result in tabular format
+        # If the cluster method fails, an return code != is returned
         cluster = Cluster(os.path.join(out_p, "{0}.ic.csv".format(prefix)), min_cluster, plot, debug)
         if cluster_method == "r":
             clustering = cluster.cluster_rearrangement()
@@ -201,7 +210,6 @@ if __name__ == '__main__':
             # Add random cluster to the queue
             for i, clstr in enumerate(random_cluster_list):
                 parsnp_queue.append(("{0}_{1}_R{2}".format(prefix, i, r), clstr, next_ref, False))
-
         # Add cluster to the queue
         for i, clstr in enumerate(cluster_list):
             parsnp_queue.append(("{0}_{1}".format(prefix, i), clstr, next_ref, True))
