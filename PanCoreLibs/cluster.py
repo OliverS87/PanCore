@@ -102,6 +102,62 @@ class Cluster:
                 pass
         return run.returncode
 
+    # Cluster based on length differences between intercore regions with the same label
+    # -> Cluster based on insertions/deletions
+    def cluster_length(self):
+        # Only look at intercore regions that are present in every sequence
+        # otherwise the length would be 'NA" and that is only upsetting R
+        p_ic_region = {}
+        # We need the number of sequences later for an iteration
+        max_si = 0
+        # Parse the intercore stat table file
+        with open(self.ic_stat_p, "r") as ic_stat_f:
+            # Skip header
+            header = next(ic_stat_f)
+            for line in ic_stat_f:
+                data = line.strip().split(",")
+                cb1 = int(data[1])
+                cb2 = int(data[2])
+                si = int(data[0])
+                max_si = max(max_si, si)
+                type = data[6]
+                if type == "P":
+                    try:
+                        p_ic_region[(cb1, cb2)].append(line)
+                    except KeyError:
+                        p_ic_region[(cb1, cb2)] = [line]
+        # Keep only those ic regions where all assemblies are present
+        p_ic_region = {key: val for key, val in p_ic_region.items() if len(val) == max_si}
+        # Define output path
+        out_p, filename = path.split(self.ic_stat_p)
+        prefix = filename.split(".")[0]
+        filename = filename.replace(".ic.", ".len.")
+        # Write filtered ic regions to file
+        with open(path.join(out_p, filename), "w") as out_f:
+            out_f.write(header)
+            for val in p_ic_region.values():
+                for item in val:
+                    out_f.write(item)
+        # Next, run an rscript to do the clustering
+        cluster_filename = filename.replace(".len.", ".clstr.")
+        if self.make_plots:
+            png_filepath = path.join(out_p, filename.replace(".len.csv", ".png"))
+        else:
+            png_filepath = "NA"
+        run = subprocess.run("Rscript --vanilla {5} {0} {1} {2} {3} {4}".format(
+            path.join(out_p, filename), path.join(out_p, cluster_filename),
+            png_filepath, self.min_nr_clstr, prefix,
+        path.join(out_p, "iclength_deviation_eucl_cluster.r")), stderr=subprocess.PIPE,
+            stdout=subprocess.PIPE, shell=True)
+        # Clean up?
+        if not self.debug:
+            try:
+                remove(path.join(out_p, filename))
+            except FileNotFoundError:
+                pass
+        return run.returncode
+
+
     # Calculate pairwise ANI with mash
     # First, split up useqs in individual files, one for each si
     def cluster_ani(self, cpu, all_seqs):
@@ -231,55 +287,6 @@ class Cluster:
                 pass
             try:
                 remove(mash_dist_p)
-            except FileNotFoundError:
-                pass
-        return run.returncode
-
-    def cluster_length(self):
-        p_ic_region = {}
-        max_si = 0
-        with open(self.ic_stat_p, "r") as ic_stat_f:
-            # Skip header
-            header = next(ic_stat_f)
-            for line in ic_stat_f:
-                data = line.strip().split(",")
-                cb1 = int(data[1])
-                cb2 = int(data[2])
-                si = int(data[0])
-                max_si = max(max_si, si)
-                type = data[6]
-                if type == "P":
-                    try:
-                        p_ic_region[(cb1, cb2)].append(line)
-                    except KeyError:
-                        p_ic_region[(cb1, cb2)] = [line]
-        # Keep only those ic regions where all assemblies are present
-        p_ic_region = {key: val for key, val in p_ic_region.items() if len(val) == max_si}
-        # Define output path
-        out_p, filename = path.split(self.ic_stat_p)
-        prefix = filename.split(".")[0]
-        filename = filename.replace(".ic.", ".len.")
-        # Write filtered ic regions to file
-        with open(path.join(out_p, filename), "w") as out_f:
-            out_f.write(header)
-            for val in p_ic_region.values():
-                for item in val:
-                    out_f.write(item)
-        # Next, run an rscript to do the clustering
-        cluster_filename = filename.replace(".len.", ".clstr.")
-        if self.make_plots:
-            png_filepath = path.join(out_p, filename.replace(".len.csv", ".png"))
-        else:
-            png_filepath = "NA"
-        run = subprocess.run("Rscript --vanilla {5} {0} {1} {2} {3} {4}".format(
-            path.join(out_p, filename), path.join(out_p, cluster_filename),
-            png_filepath, self.min_nr_clstr, prefix,
-        path.join(out_p, "iclength_deviation_eucl_cluster.r")), stderr=subprocess.PIPE,
-            stdout=subprocess.PIPE, shell=True)
-        # Clean up?
-        if not self.debug:
-            try:
-                remove(path.join(out_p, filename))
             except FileNotFoundError:
                 pass
         return run.returncode

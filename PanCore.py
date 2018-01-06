@@ -3,13 +3,13 @@ import os
 import shutil
 import sys
 
-from pansnp_libs.cluster import Cluster
-from pansnp_libs.iclength_deviation_eucl_cluster import IclengthClusterRscript
-from pansnp_libs.mash_ani_clustering import MashAnoClusteringRscript
-from pansnp_libs.rearrangement_jac_cluster import RearrangementJacCluster
-from SimpleParSNP import SimpleParSNP
-from pansnp_libs.reduce_input import ReduceInput
-from pansnp_libs.random_cluster import RandomCluster
+from PanCoreLibs.cluster import Cluster
+from PanCoreLibs.iclength_deviation_eucl_cluster import IclengthClusterRscript
+from PanCoreLibs.mash_ani_clustering import MashAnoClusteringRscript
+from PanCoreLibs.rearrangement_jac_cluster import RearrangementJacCluster
+from ParCore import ParCore
+from PanCoreLibs.reduce_input import ReduceInput
+from PanCoreLibs.random_cluster import RandomCluster
 
 def clean_up(outpath, prefix, keep_all_core, debug):
     if debug:
@@ -130,7 +130,7 @@ if __name__ == '__main__':
             print("Skipping {0} because length <= 1".format(prefix))
             continue
         # Prepare simpleparsnp run
-        sp = SimpleParSNP()
+        sp = ParCore()
         sp.set_dist(dist_param)
         sp.set_reference(this_ref)
         sp.set_threads(cpu_count)
@@ -139,9 +139,9 @@ if __name__ == '__main__':
         # Run parsnp, if clustering by mash/ani, create the unaligned file
         # Else, create the intracore region stat file
         if cluster_method == "sa" or cluster_method == "sc":
-            sp_rc = sp.run_parsnp(out_p, True, False)
+            sp_rc = sp.run_parcore(out_p, True, False)
         else:
-            sp_rc = sp.run_parsnp(out_p, (False or reduce), True)
+            sp_rc = sp.run_parcore(out_p, (False or reduce), True)
         if sp_rc != 0:
             print("parsnp for {0} failed.\n{1}".format(prefix, sp_rc))
             clean_up(out_p, prefix, keep_all_core, debug)
