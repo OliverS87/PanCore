@@ -143,7 +143,7 @@ if __name__ == '__main__':
         else:
             sp_rc = sp.run_parcore(out_p, (False or reduce), True)
         if sp_rc != 0:
-            print("parsnp for {0} failed.\n{1}".format(prefix, sp_rc))
+            print("ParCore for {0} failed.\n{1}".format(prefix, sp_rc))
             clean_up(out_p, prefix, keep_all_core, debug)
             continue
         # If the current cluster shall not be split into subcluster, stop here and continue with the next

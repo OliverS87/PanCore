@@ -211,6 +211,8 @@ class ParCore:
                              shell=True, stdin=None,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                              close_fds=True, executable="/bin/bash")
+        print(run.stderr)
+        print(run.stdout)
         # Return RC if failed
         if run.returncode != 0:
             self.write_log("ParCore run failed. Bummer :(\n")
