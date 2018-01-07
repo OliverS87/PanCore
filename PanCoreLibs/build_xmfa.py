@@ -378,6 +378,7 @@ class BuildXmfa:
 
 
     # Extract all unaligned sequences for one input assembly file
+    # Needs to be finished in a future version
     def generate_useq(self, input_f_path):
         # Extract filename from input_f_path
         filename = path.split(input_f_path)[-1]
@@ -457,7 +458,8 @@ class BuildXmfa:
                     index = (global_start, global_stop, strand, contig_id, contig_start)
                     next_cluster.add_index(current_fn, index)
                 else:
-                    next_cluster.add_sequence(current_fn, line)
+                    if next_cluster and current_fn:
+                        next_cluster.add_sequence(current_fn, line)
         # Add this cluster node to the tree
         self.al_tree[node_label] = new_al_node
         # If this is the xmfa file for the root node, i.e. the first alignment performed,
@@ -635,17 +637,12 @@ class BuildXmfa:
 
 if __name__ == '__main__':
     import sys
-    input_xmfa_1 = sys.argv[1]
-    input_xmfa_2 = sys.argv[2]
-    input_xmfa_3 = sys.argv[3]
-    build_xmfa = BuildXmfa("./build_test", "pansnp")
-    print("Adding 1")
-    build_xmfa.add_xmfa(input_xmfa_1)
-    #print("Adding 2")
-    #build_xmfa.add_xmfa(input_xmfa_2)
-    #print("Adding 3")
-    #build_xmfa.add_xmfa(input_xmfa_3)
+    input_xmfas = sys.argv[1:]
+    build_xmfa = BuildXmfa("./build_test", "cd50_rerun")
+    for ix, input_xmfa in enumerate(input_xmfas):
+        print("Adding {0}".format(ix))
+        build_xmfa.add_xmfa(input_xmfa)
     build_xmfa.generate_combined_xmfa()
-    build_xmfa.generate_useq("Clostridium_reference_genome_noplasmid.fna")
+    #build_xmfa.generate_useq("Clostridium_reference_genome_noplasmid.fna")
 
 

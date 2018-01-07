@@ -10,6 +10,7 @@ from PanCoreLibs.rearrangement_jac_cluster import RearrangementJacCluster
 from ParCore import ParCore
 from PanCoreLibs.reduce_input import ReduceInput
 from PanCoreLibs.random_cluster import RandomCluster
+from .PanCoreLibs.build_xmfa import BuildXmfa
 
 def clean_up(outpath, prefix, keep_all_core, debug):
     if debug:
@@ -96,7 +97,11 @@ if __name__ == '__main__':
     # Create output folder
     if not os.path.isdir(out_p):
         os.makedirs(out_p, exist_ok=True)
-
+    # All the consecutive alignments created by PanCore are
+    # merged into one large xmfa file at the end
+    # Overlaps between alignments are resolved, with that alignment with more
+    # sequences "winning"
+    build_xmfa = BuildXmfa(out_p, prefix)
     # Initialize the cluster queue
     # Each element is a list of files that are going to be core clustered by parsnp
     # each item comes in this format (id[file1,file2,file3,...])
@@ -164,7 +169,10 @@ if __name__ == '__main__':
             next_ref = os.path.join(out_p, "new_input", "{0}_ref.faa".format(prefix))
         else:
             next_ref = this_ref
-
+        # Add the xmfa alignment for this cluster to the global xmfa alignment:
+        # The global alignment removes all sequence regions from the alignment that are
+        # part of any alignment in any parent node of this node
+        build_xmfa.add_xmfa(os.path.join(out_p, "{0}.xmfa".format(prefix)))
         # Split the assemblies associated with this node into subsets
         # The cluster method is by
         # a) Rearrangements: Missing intercore regions indicate sequence rearrangements
@@ -214,4 +222,8 @@ if __name__ == '__main__':
         for i, clstr in enumerate(cluster_list):
             parsnp_queue.append(("{0}_{1}".format(prefix, i), clstr, next_ref, True))
         clean_up(out_p, prefix, keep_all_core, debug)
+    # Remove rscript that was used for clustering
     rscript.remove_script()
+    # Build the global xmfa alignment file
+    build_xmfa.generate_combined_xmfa()
+    # That's it, mate :) Nothing left to do
