@@ -10,7 +10,7 @@ from PanCoreLibs.rearrangement_jac_cluster import RearrangementJacCluster
 from ParCore import ParCore
 from PanCoreLibs.reduce_input import ReduceInput
 from PanCoreLibs.random_cluster import RandomCluster
-from .PanCoreLibs.build_xmfa import BuildXmfa
+from PanCoreLibs.build_xmfa import BuildXmfa
 
 def clean_up(outpath, prefix, keep_all_core, debug):
     if debug:
