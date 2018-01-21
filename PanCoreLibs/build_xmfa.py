@@ -507,7 +507,13 @@ class BuildXmfa:
             child_clstr = list(child_node.get_clstr().values())
             parent_clstr = list(parent_node.get_clstr().values())
             # Get a list of all assemblies (i.e. file names) involved in this child node
-            child_filenames = list(list(child_clstr)[0].get_indices().keys())
+            # If there are no assemblies in this child node left, our work is done here
+            # All of the sequences covered by the child alignment are seen in
+            # a parent alignment before
+            try:
+                child_filenames = list(list(child_clstr)[0].get_indices().keys())
+            except IndexError:
+                return
             # For each filename, check for overlaps between the child and the parent clusters
             # If there is an overlap, split the sequences in the separate cluster
             # Ensure that the reference file name is in first position
