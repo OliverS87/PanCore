@@ -296,7 +296,11 @@ class AlignmentNode:
     # Return all file-names represented in this node
     def get_filenames(self):
         # Pick any cluster since all clusters have the same file names
-        return list(list(self.clusters.values())[0].get_indices().keys())
+        # The node may be empty, return an empty list in this case
+        try:
+            return list(list(self.clusters.values())[0].get_indices().keys())
+        except IndexError:
+            return []
 
     # Remove all clusters from this node that are of zero length
     def remove_zero_length_clstr(self):
